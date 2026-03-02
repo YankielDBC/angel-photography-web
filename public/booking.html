@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reserva tu Sesión de Fotos | Angel Photography Miami</title>
+    <meta name="description" content="Reserva tu sesión de fotografía profesional. Paquetes disponibles desde $200.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-card: #1a1a1a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1a1;
+            --text-muted: #6b6b6b;
+            --accent: #c9a962;
+            --accent-hover: #dfc07a;
+            --accent-glow: rgba(201, 169, 98, 0.3);
+            --border: #2a2a2a;
+            --success: #4ade80;
+            --error: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Grain Overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Background Gradient */
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 169, 98, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(201, 169, 98, 0.05) 0%, transparent 40%),
+                var(--bg-primary);
+            z-index: -1;
+        }
+
+        /* Canvas */
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 0 30px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 42px;
+            font-weight: 300;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 300;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 28px 20px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .card-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Calendar */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-month {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-nav button {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-nav button:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .calendar-day {
+            visibility: visible !important;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-primary);
+        }
+
+        .calendar-day:hover:not(.disabled):not(.selected) {
+            background: var(--bg-secondary);
+            border-color: var(--border);
+        }
+
+        .calendar-day.selected {
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-weight: 500;
+        }
+
+        .calendar-day.disabled {
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .calendar-day.today {
+            border-color: var(--accent);
+        }
+
+        /* Time Slots */
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .time-slot {
+            padding: 14px 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .time-slot:hover:not(.disabled):not(.selected) {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+        }
+
+        .time-slot.selected {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+            font-weight: 500;
+        }
+
+        .time-slot.disabled {
+            color: var(--text-muted);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Package Select - Custom */
+        .package-select-wrapper {
+            position: relative;
+        }
+
+        .package-select {
+            width: 100%;
+            padding: 16px;
+            padding-right: 44px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .package-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .package-select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* Summary */
+        .summary {
+            background: linear-gradient(135deg, rgba(201, 169, 98, 0.1) 0%, transparent 100%);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .summary-row:first-child {
+            padding-top: 0;
+        }
+
+        .summary-row span:first-child {
+            color: var(--text-secondary);
+        }
+
+        .summary-total {
+            border-top: 1px solid var(--border);
+            margin-top: 12px;
+            padding-top: 12px;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .summary-total span:last-child {
+            color: var(--accent);
+            font-size: 20px;
+        }
+
+        /* Policy Note */
+        .policy-note {
+            background: rgba(248, 113, 113, 0.08);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .policy-note strong {
+            color: var(--error);
+            font-weight: 500;
+        }
+
+        /* Button */
+        .btn-primary {
+            width: 100%;
+            padding: 18px 24px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            transform: translateX(100%);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Steps Indicator */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            width: 32px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            background: var(--accent);
+            width: 24px;
+        }
+
+        .step.completed {
+            background: var(--accent);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Loading State */
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Section visibility */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .title {
+                font-size: 36px;
+            }
+            
+            .card {
+                padding: 24px 16px;
+            }
+            
+            .time-slots {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Success Message */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.95);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .success-overlay.active {
+            display: flex;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 24px;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .success-text {
+            color: var(--text-secondary);
+            font-size: 15px;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <canvas id="canvas-bg"></canvas>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">Angel Photography Miami</div>
+            <h1 class="title">Reserva tu<br>Sesión</h1>
+            <p class="subtitle">Elige fecha y hora para tu sesión de fotos</p>
+        </header>
+
+        <!-- Steps -->
+        <div class="steps">
+            <div class="step active" data-step="1"></div>
+            <div class="step" data-step="2"></div>
+            <div class="step" data-step="3"></div>
+        </div>
+
+        <!-- Section 1: Date & Time -->
+        <section class="section active" id="section-1">
+            <div class="card">
+                <h2 class="card-title">Selecciona la Fecha</h2>
+                <div class="calendar-header">
+                    <span class="calendar-month" id="calendar-month"></span>
+                    <div class="calendar-nav">
+                        <button id="prev-month">←</button>
+                        <button id="next-month">→</button>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Calendar generated by JS -->
+                </div>
+            </div>
+
+            <div class="card" id="time-section" style="display: none;">
+                <h2 class="card-title">Selecciona la Hora</h2>
+                <div class="time-slots" id="time-slots">
+                    <button class="time-slot" data-time="09:30">9:30 AM</button>
+                    <button class="time-slot" data-time="11:30">11:30 AM</button>
+                    <button class="time-slot" data-time="14:00">2:00 PM</button>
+                    <button class="time-slot" data-time="16:00">4:00 PM</button>
+                    <button class="time-slot" data-time="18:00">6:00 PM</button>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="continue-btn" disabled>
+                Continuar
+            </button>
+        </section>
+
+        <!-- Section 2: Package & Info -->
+        <section class="section" id="section-2">
+            <div class="card">
+                <h2 class="card-title">Tu Paquete</h2>
+                <div class="form-group">
+                    <label class="form-label">Paquete de Sesión</label>
+                    <div class="package-select-wrapper">
+                        <select class="package-select" id="packageType">
+                            <option value="">Selecciona un tipo de sesión...</option>
+                            <option value="exclusivo">Paquete Exclusivo</option>
+                            <option value="newborn">Paquete Newborn</option>
+                            <option value="kids">Paquete Kids</option>
+                            <option value="pregnant">Paquete Pregnant</option>
+                            <option value="wedding">Paquete Wedding</option>
+                            <option value="eventos">Paquete Eventos</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="tierWrapper" style="display:none;">
+                    <label class="form-label">Selecciona el Paquete</label>
+                    <div class="package-select-wrapper">
+                        <select class="package-select" id="packageTier">
+                            <option value="">Selecciona un paquete...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Tus Datos</h2>
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-input" id="name-input" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" class="form-input" id="email-input" placeholder="tu@email.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Teléfono</label>
+                    <input type="tel" class="form-input" id="phone-input" placeholder="(555) 123-4567">
+                </div>
+            </div>
+
+            <button class="btn-primary" id="continue-btn-2" disabled>
+                Continuar
+            </button>
+        </section>
+
+        <!-- Section 3: Confirm & Pay -->
+        <section class="section" id="section-3">
+            <div class="card">
+                <h2 class="card-title">Resumen de Reserva</h2>
+                <div class="summary">
+                    <div class="summary-row">
+                        <span>Fecha</span>
+                        <span id="summary-date">-</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Hora</span>
+                        <span id="summary-time">-</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Paquete</span>
+                        <span id="summary-package">-</span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <span>Total Paquete</span>
+                        <span id="summary-total">$0</span>
+                    </div>
+                    <div class="summary-row" style="border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;">
+                        <span>Reserva (se descuenta)</span>
+                        <span style="color: var(--accent);">-$100</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="policy-note">
+                <strong>⚠️ Política de cancelación:</strong> El pago de $100 de reserva se descuenta del valor total del paquete el día de la sesión. 
+                <strong>Si no asistes, pierdes el pago de la reserva.</strong> Por favor selecciona tu cita con responsabilidad.
+            </div>
+
+            <button class="btn-primary" id="pay-btn">
+                Pagar $100 de Reserva
+            </button>
+        </section>
+    </div>
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="success-overlay">
+        <div class="success-icon">✓</div>
+        <h2 class="success-title">Reserva Confirmada</h2>
+        <p class="success-text">Te hemos enviado un correo con los detalles. ¡Nos vemos en tu sesión!</p>
+    </div>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // ==================== THREE.JS BACKGROUND ====================
+        const canvas = document.getElementById('canvas-bg');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        camera.position.z = 30;
+
+        // Particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particleCount = 80;
+        const posArray = new Float32Array(particleCount * 3);
+        
+        for(let i = 0; i < particleCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 60;
+        }
+        
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0xc9a962,
+            transparent: true,
+            opacity: 0.6,
+        });
+        
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        // Floating circles
+        const circles = [];
+        for (let i = 0; i < 5; i++) {
+            const geometry = new THREE.CircleGeometry(Math.random() * 2 + 0.5, 32);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xc9a962,
+                transparent: true,
+                opacity: 0.03 + Math.random() * 0.03
+            });
+            const circle = new THREE.Mesh(geometry, material);
+            circle.position.set(
+                (Math.random() - 0.5) * 40,
+                (Math.random() - 0.5) * 40,
+                (Math.random() - 0.5) * 20 - 5
+            );
+            scene.add(circle);
+            circles.push({
+                mesh: circle,
+                speed: 0.0002 + Math.random() * 0.0003,
+                angle: Math.random() * Math.PI * 2,
+                radius: 0.5 + Math.random() * 1
+            });
+        }
+
+        // Animation
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            particlesMesh.rotation.y += 0.0003;
+            particlesMesh.rotation.x += 0.0001;
+            
+            // Mouse influence
+            particlesMesh.rotation.y += mouseX * 0.001;
+            particlesMesh.rotation.x += mouseY * 0.001;
+            
+            // Animate circles
+            circles.forEach(c => {
+                c.angle += c.speed;
+                c.mesh.position.x += Math.sin(c.angle) * 0.01;
+                c.mesh.position.y += Math.cos(c.angle) * 0.01;
+            });
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ==================== CALENDAR LOGIC ====================
+        const calendarGrid = document.getElementById('calendar-grid');
+        const calendarMonth = document.getElementById('calendar-month');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        const timeSection = document.getElementById('time-section');
+        
+        let currentDate = new Date();
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let selectedDate = null;
+        let selectedTime = null;
+
+        const weekdays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        function renderCalendar() {
+            const year = currentYear;
+            const month = currentMonth;
+            
+            calendarMonth.textContent = months[month] + " " + year;
+            calendarGrid.innerHTML = '';
+            
+            // Weekdays
+            weekdays.forEach(day => {
+                const el = document.createElement('div');
+                el.className = 'calendar-weekday';
+                el.textContent = day;
+                calendarGrid.appendChild(el);
+            });
+            
+            // First day of month
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize to midnight
+            
+            // Empty cells
+            for (let i = 0; i < firstDay; i++) {
+                const el = document.createElement('div');
+                calendarGrid.appendChild(el);
+            }
+            
+            // Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const el = document.createElement('button');
+                el.className = 'calendar-day';
+                el.textContent = day;
+                
+                const dateObj = new Date(year, month, day);
+                dateObj.setHours(0, 0, 0, 0);
+                
+                // Past dates - disable any date before today
+                if (dateObj < today) {
+                    el.classList.add('disabled');
+                }
+                
+                // Today
+                if (dateObj.getTime() === today.getTime()) {
+                    el.classList.add('today');
+                }
+                
+                // Selected
+                if (selectedDate && dateObj.getTime() === selectedDate.getTime()) {
+                    el.classList.add('selected');
+                }
+                
+                el.addEventListener('click', () => {
+                    if (!el.classList.contains('disabled')) {
+                        selectedDate = dateObj;
+                        selectedTime = null;
+                        renderCalendar();
+                        timeSection.style.display = 'block';
+                        document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
+                        updateContinueBtn();
+                    }
+                });
+                
+                calendarGrid.appendChild(el);
+            }
+        }
+
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            renderCalendar();
+        });
+
+        // Time slots
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.addEventListener('click', () => {
+                if (!slot.classList.contains('disabled')) {
+                    document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
+                    slot.classList.add('selected');
+                    console.log("Time selected:", slot.dataset.time); selectedTime = slot.dataset.time;
+                    updateContinueBtn();
+                }
+            });
+        });
+
+        // ==================== FORM VALIDATION ====================
+        function updateContinueBtn() {
+            const btn = document.getElementById('continue-btn');
+            console.log("Update btn: selectedDate=", selectedDate, "selectedTime=", selectedTime); btn.disabled = !(selectedDate && selectedTime);
+        }
+
+        // Section 2 validation
+        const packageTypeSelect = document.getElementById('packageType');
+        const packageTierSelect = document.getElementById('packageTier');
+        const nameInput = document.getElementById('name-input');
+        const emailInput = document.getElementById('email-input');
+        const phoneInput = document.getElementById('phone-input');
+        const continueBtn2 = document.getElementById('continue-btn-2');
+
+        function validateForm2() {
+            const packageTypeValid = packageTypeSelect.value !== '';
+            const packageTierValid = packageTierSelect.value !== '';
+            const nameValid = nameInput.value.trim().length > 0;
+            const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value);
+            const phoneValid = phoneInput.value.trim().length >= 10;
+            
+            continueBtn2.disabled = !(packageTypeValid && packageTierValid && nameValid && emailValid && phoneValid);
+        }
+
+        packageTypeSelect.addEventListener('change', validateForm2);
+        packageTierSelect.addEventListener('change', validateForm2);
+        nameInput.addEventListener('input', validateForm2);
+        emailInput.addEventListener('input', validateForm2);
+        phoneInput.addEventListener('input', validateForm2);
+
+        // ==================== NAVIGATION ====================
+        const step1 = document.getElementById('section-1');
+        const step2 = document.getElementById('section-2');
+        const step3 = document.getElementById('section-3');
+
+        document.getElementById('continue-btn').addEventListener('click', () => {
+            step1.classList.remove('active');
+            step2.classList.add('active');
+            updateSteps(2);
+            window.scrollTo(0, 0);
+        });
+
+        document.getElementById('continue-btn-2').addEventListener('click', () => {
+            // Update summary
+            const packageTypeOption = packageTypeSelect.options[packageTypeSelect.selectedIndex];
+            const packageTierOption = packageTierSelect.options[packageTierSelect.selectedIndex];
+            const packageName = packageTypeOption.text + ' - ' + packageTierOption.text;
+            const packagePrice = packageTierSelect.value ? packageTierSelect.options[packageTierSelect.selectedIndex].dataset.price : '0';
+            
+            document.getElementById('summary-date').textContent = selectedDate.toLocaleDateString('es-ES', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            document.getElementById('summary-time').textContent = selectedTime;
+            document.getElementById('summary-package').textContent = packageName;
+            document.getElementById('summary-total').textContent = '$' + packagePrice;
+            
+            step2.classList.remove('active');
+            step3.classList.add('active');
+            updateSteps(3);
+            window.scrollTo(0, 0);
+        });
+
+        function updateSteps(step) {
+            document.querySelectorAll('.step').forEach((el, i) => {
+                el.classList.remove('active', 'completed');
+                if (i + 1 < step) el.classList.add('completed');
+                if (i + 1 === step) el.classList.add('active');
+            });
+        }
+
+        // ==================== PAYMENT ====================
+        document.getElementById('pay-btn').addEventListener('click', () => {
+            // Redirect to Stripe checkout
+            window.location.href = 'https://buy.stripe.com/test_28E9AT6Qt52y4SD2FTdEs00';
+        });
+
+        // Initialize
+        renderCalendar();
+    </script>
+<script>
+const packageTiers = {
+  wedding: [
+    {v:'silver',t:'Silver - $600',p:600},
+    {v:'gold',t:'Gold - $1050',p:1050},
+    {v:'platinum',t:'Platinum - $1550',p:1550},
+    {v:'premium',t:'Premium - $2500',p:2500}
+  ],
+  eventos: [
+    {v:'silver',t:'Silver - $600',p:600},
+    {v:'gold',t:'Gold - $1050',p:1050},
+    {v:'platinum',t:'Platinum - $1550',p:1550},
+    {v:'premium',t:'Premium - $2500',p:2500}
+  ],
+  exclusivo: [
+    {v:'silver',t:'Silver - $600',p:600},
+    {v:'gold',t:'Gold - $1250',p:1250},
+    {v:'platinum',t:'Platinum - $1950',p:1950}
+  ],
+  newborn: [
+    {v:'digital',t:'Digital - $190',p:190},
+    {v:'silver',t:'Silver - $400',p:400},
+    {v:'gold',t:'Gold - $680',p:680},
+    {v:'platinum',t:'Platinum - $850',p:850},
+    {v:'diamond',t:'Diamond - $1390',p:1390}
+  ],
+  kids: [
+    {v:'digital',t:'Digital - $190',p:190},
+    {v:'silver',t:'Silver - $400',p:400},
+    {v:'gold',t:'Gold - $680',p:680},
+    {v:'platinum',t:'Platinum - $850',p:850},
+    {v:'diamond',t:'Diamond - $1390',p:1390}
+  ],
+  pregnant: [
+    {v:'digital',t:'Digital - $190',p:190},
+    {v:'silver',t:'Silver - $400',p:400},
+    {v:'gold',t:'Gold - $680',p:680},
+    {v:'platinum',t:'Platinum - $850',p:850},
+    {v:'diamond',t:'Diamond - $1390',p:1390}
+  ]
+};
+
+document.getElementById('packageType').addEventListener('change', function() {
+  const tierWrapper = document.getElementById('tierWrapper');
+  const tierSelect = document.getElementById('packageTier');
+  const selectedType = this.value;
+  
+  if (selectedType) {
+    tierWrapper.style.display = 'block';
+    tierSelect.innerHTML = '<option value="">Selecciona un paquete...</option>';
+    
+    packageTiers[selectedType].forEach(tier => {
+      const option = document.createElement('option');
+      option.value = tier.v;
+      option.textContent = tier.t;
+      option.dataset.price = tier.p;
+      tierSelect.appendChild(option);
+    });
+  } else {
+    tierWrapper.style.display = 'none';
+    tierSelect.innerHTML = '<option value="">Selecciona un paquete...</option>';
+  }
+  
+  updatePrice();
+});
+
+document.getElementById('packageTier').addEventListener('change', updatePrice);
+</script></body>
+</html>
