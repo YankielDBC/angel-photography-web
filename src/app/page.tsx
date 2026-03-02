@@ -83,7 +83,7 @@ export default function Home() {
     e.preventDefault()
     setTransitionMode(true)
     setTimeout(() => {
-      window.location.href = '/book'
+      window.location.href = '/booking'
     }, 2500)
   }
 
@@ -219,12 +219,12 @@ export default function Home() {
             <Link href="#work" className="text-xs text-white/70 hover:text-white transition-colors">Work</Link>
             <Link href="#services" className="text-xs text-white/70 hover:text-white transition-colors">Services</Link>
             <Link href="#contact" className="text-xs text-white/70 hover:text-white transition-colors">Contact</Link>
-            <Link href="/book" onClick={handleBookClick} className="bg-[#c9a962] text-black px-5 py-1.5 rounded-full text-xs font-medium hover:bg-[#d4b872] transition-colors">
+            <Link href="/booking" onClick={handleBookClick} className="bg-[#c9a962] text-black px-5 py-1.5 rounded-full text-xs font-medium hover:bg-[#d4b872] transition-colors">
               Book Now
             </Link>
           </div>
           
-          <Link href="/book" onClick={handleBookClick} className="lg:hidden bg-[#c9a962] text-black px-4 py-1.5 rounded-full text-xs font-medium">
+          <Link href="/booking" onClick={handleBookClick} className="lg:hidden bg-[#c9a962] text-black px-4 py-1.5 rounded-full text-xs font-medium">
             Book
           </Link>
         </div>
@@ -262,7 +262,7 @@ export default function Home() {
           </div>
           
           <div className="hero-cta flex flex-row gap-3 justify-center">
-            <Link href="/book" onClick={handleBookClick} className="bg-[#c9a962] text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#d4b872] transition-all duration-300 hover:scale-105">
+            <Link href="/booking" onClick={handleBookClick} className="bg-[#c9a962] text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#d4b872] transition-all duration-300 hover:scale-105">
               Book a Session
             </Link>
             <Link href="#work" className="border border-white/30 text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-white/10 transition-all duration-300">
@@ -296,7 +296,7 @@ export default function Home() {
         </div>
         
         <div className="text-center mt-5">
-          <Link href="/book" onClick={handleBookClick} className="inline-flex items-center gap-2 text-[#c9a962] text-xs tracking-wider hover:gap-3 transition-all">
+          <Link href="/booking" onClick={handleBookClick} className="inline-flex items-center gap-2 text-[#c9a962] text-xs tracking-wider hover:gap-3 transition-all">
             Book Your Session <IconArrowRight />
           </Link>
         </div>
@@ -337,7 +337,7 @@ export default function Home() {
                   <p className="text-[#c9a962] text-xs font-medium mb-0.5">{service.price}</p>
                   <h3 className="text-lg font-light mb-1">{service.title}</h3>
                   <p className="text-white/50 text-xs mb-3">{service.desc}</p>
-                  <Link href="/book" onClick={handleBookClick} className="inline-flex items-center gap-1.5 text-[#c9a962] text-xs tracking-wider hover:gap-2.5 transition-all">
+                  <Link href="/booking" onClick={handleBookClick} className="inline-flex items-center gap-1.5 text-[#c9a962] text-xs tracking-wider hover:gap-2.5 transition-all">
                     Book Now <IconArrowRight />
                   </Link>
                 </div>
@@ -362,7 +362,7 @@ export default function Home() {
           <p className="text-white/50 text-sm mb-8 max-w-sm mx-auto">
             One client per day to guarantee the best experience.
           </p>
-          <Link href="/book" onClick={handleBookClick} className="bg-[#c9a962] text-black px-9 py-3 rounded-full text-sm font-medium hover:bg-[#d4b872] transition-all duration-300 hover:scale-105 inline-block">
+          <Link href="/booking" onClick={handleBookClick} className="bg-[#c9a962] text-black px-9 py-3 rounded-full text-sm font-medium hover:bg-[#d4b872] transition-all duration-300 hover:scale-105 inline-block">
             Schedule a Call
           </Link>
         </div>
