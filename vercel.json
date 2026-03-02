@@ -2,6 +2,8 @@
   "rewrites": [
     { "source": "/book/:path*", "destination": "/book/:path*" },
     { "source": "/admin/:path*", "destination": "/admin/:path*" },
+    { "source": "/booking", "destination": "/booking.html" },
+    { "source": "/booking/:path*", "destination": "/booking.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
