@@ -164,8 +164,8 @@
       grid-template-columns: 1fr 1.2fr 0.8fr;
       grid-template-rows: 1fr 1fr;
       gap: 4px;
-      opacity: 0.85;
-      filter: saturate(1.15) brightness(1.1);
+      opacity: 0.3;
+      filter: saturate(0.8);
     }
 
     .hero-mosaic div {
@@ -175,20 +175,20 @@
     }
 
     .hero-mosaic div:nth-child(1) {
-      background: linear-gradient(135deg, #7a6a55 0%, #9a8a75 50%, #7a6a55 100%);
+      background: linear-gradient(135deg, #3a2f25 0%, #5a4a35 50%, #3a2f25 100%);
       grid-row: 1 / 3;
     }
 
     .hero-mosaic div:nth-child(2) {
-      background: linear-gradient(120deg, #8a7a65 0%, #aa9a85 100%);
+      background: linear-gradient(120deg, #4a3f32 0%, #6a5a45 100%);
     }
 
     .hero-mosaic div:nth-child(3) {
-      background: linear-gradient(150deg, #756858 0%, #958878 100%);
+      background: linear-gradient(150deg, #352a20 0%, #554838 100%);
     }
 
     .hero-mosaic div:nth-child(4) {
-      background: linear-gradient(100deg, #847868 0%, #a49888 100%);
+      background: linear-gradient(100deg, #443828 0%, #5f4e3a 100%);
       grid-column: 2 / 4;
     }
 
@@ -443,13 +443,13 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: saturate(0.85) brightness(1.0);
+      filter: saturate(0.7) brightness(0.75);
       transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s ease;
     }
 
     .service-card:hover .service-card-img {
       transform: scale(1.07);
-      filter: saturate(1.0) brightness(1.1);
+      filter: saturate(0.85) brightness(0.85);
     }
 
     /* gradient overlay */
@@ -458,16 +458,16 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(to bottom,
-          rgba(10, 8, 6, 0) 0%,
-          rgba(10, 8, 6, 0.1) 40%,
-          rgba(10, 8, 6, 0.35) 70%,
-          rgba(10, 8, 6, 0.55) 100%);
+          rgba(10, 8, 6, 0.05) 0%,
+          rgba(10, 8, 6, 0.15) 35%,
+          rgba(10, 8, 6, 0.75) 70%,
+          rgba(10, 8, 6, 0.95) 100%);
       z-index: 1;
       transition: opacity 0.5s ease;
     }
 
     .service-card:hover::after {
-      opacity: 0.75;
+      opacity: 0.85;
     }
 
     /* golden top line */
@@ -513,8 +513,8 @@
 
     .service-name {
       font-family: var(--font-display);
-      font-size: 1.7rem;
-      font-weight: 500;
+      font-size: 1.5rem;
+      font-weight: 400;
       margin-bottom: 0.6rem;
       color: var(--white);
     }
@@ -538,7 +538,7 @@
     .service-price {
       margin-top: 0.8rem;
       font-family: var(--font-display);
-      font-size: 0.9rem;
+      font-size: 0.75rem;
       letter-spacing: 0.2em;
       color: var(--golden);
     }
@@ -568,13 +568,13 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      filter: saturate(0.95) brightness(1.0);
+      filter: saturate(0.8) brightness(0.88);
       transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1), filter 0.8s ease;
     }
 
     .gallery-cell:hover img {
       transform: scale(1.05);
-      filter: saturate(1.1) brightness(1.1);
+      filter: saturate(1) brightness(0.95);
     }
 
     /* Drama layers */
@@ -582,14 +582,14 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(10, 8, 6, 0.02) 0%, rgba(10, 8, 6, 0.35) 100%);
+      background: linear-gradient(180deg, rgba(10, 8, 6, 0.05) 0%, rgba(10, 8, 6, 0.45) 100%);
       z-index: 1;
       transition: opacity 0.5s ease;
       pointer-events: none;
     }
 
     .gallery-cell:hover::before {
-      opacity: 0.35;
+      opacity: 0.5;
     }
 
     .gallery-cell::after {
@@ -679,67 +679,8 @@
 
     /* MOBILE */
     @media (max-width:600px) {
-      :root {
-        --base-size: 18px;
-      }
-      
-      body {
-        font-size: 16px;
-      }
-      
-      h1, h2, h3, h4 {
-        font-size: 1.4em;
-      }
-      
-      .service-name {
-        font-size: 1.4rem;
-      }
-      
-      .service-price {
-        font-size: 0.85rem;
-      }
-      
-      .service-desc {
-        font-size: 0.95rem;
-      }
-      
       .faq-grid {
         grid-template-columns: 1fr;
-      }
-      
-      /* Modal / Brochure - más legible */
-      .brochure-title {
-        font-size: 1.8rem;
-      }
-      
-      .brochure-details li {
-        font-size: 1rem;
-        line-height: 2;
-      }
-      
-      .brochure-img {
-        max-height: 200px;
-        filter: saturate(1.15) brightness(1.15);
-      }
-      
-      /* Gallery - sin filtro oscuro en móvil */
-      .gallery-cell img {
-        filter: saturate(1.1) brightness(1.05);
-      }
-      .gallery-cell::before {
-        background: linear-gradient(180deg, rgba(10, 8, 6, 0) 0%, rgba(10, 8, 6, 0.1) 100%);
-      }
-      
-      /* Services - más brillo pero con overlay para texto */
-      .service-card-img {
-        filter: saturate(1.05) brightness(1.1);
-      }
-      .service-card::after {
-        background: linear-gradient(to bottom,
-          rgba(10, 8, 6, 0) 0%,
-          rgba(10, 8, 6, 0) 40%,
-          rgba(10, 8, 6, 0.35) 70%,
-          rgba(10, 8, 6, 0.6) 100%);
       }
     }
 
@@ -1446,8 +1387,8 @@
 
     .brochure-title {
       font-family: var(--font-display);
-      font-size: clamp(2rem, 5vw, 2.8rem);
-      font-weight: 400;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 300;
       line-height: 1.15;
       margin-bottom: 0.6rem;
       opacity: 0;
@@ -1506,21 +1447,12 @@
     }
 
     .brochure-details li {
-      font-size: 1rem;
+      font-size: 0.8rem;
       color: var(--soft-taupe);
-      font-weight: 300;
+      font-weight: 200;
       line-height: 2.2;
       padding-left: 1.2rem;
       position: relative;
-    }
-
-    .brochure-img {
-      width: 100%;
-      max-height: 250px;
-      object-fit: cover;
-      filter: saturate(1.1) brightness(1.1);
-      border-radius: 4px;
-      margin-bottom: 1.5rem;
     }
 
     .brochure-details li::before {
@@ -2128,15 +2060,6 @@
       flex-wrap: wrap;
       justify-content: center;
     }
-
-    .inline-cta-actions .cta-btn,
-    .inline-cta-actions .cta-btn-solid {
-      min-width: 180px;
-      width: 180px;
-      text-align: center;
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
   </style>
 </head>
 
@@ -2167,7 +2090,7 @@
       <h1 class="hero-title">Los momentos<br>que <em>importan</em></h1>
       <p class="hero-subtitle">No posamos sonrisas. Las encontramos. Cada sesión es un espacio donde lo auténtico
         aparece, donde la luz y la emoción se encuentran sin esfuerzo.</p>
-      <a href="https://angelphotographymiami.com/booking" class="hero-cta">Ver paquetes <span class="hero-cta-arrow">→</span></a>
+      <a href="#servicios" class="hero-cta">Ver paquetes <span class="hero-cta-arrow">→</span></a>
     </div>
     <div class="hero-scroll">
       <span>Descubre</span>
@@ -2187,30 +2110,17 @@
 
     <div class="services-grid">
 
-      <!-- NEWBORN -->
-      <div class="service-card reveal" data-service="marca">
-        <img src="img/service-marca.jpg" alt="Newborn" class="service-card-img">
+      <!-- BODAS -->
+      <div class="service-card reveal" data-service="bodas">
+        <img src="img/service-bodas.jpg" alt="Bodas" class="service-card-img">
         <div class="service-card-body">
-          <span class="service-icon">◇</span>
-          <h3 class="service-name">Newborn</h3>
+          <span class="service-icon">✦</span>
+          <h3 class="service-name">Bodas</h3>
           <p class="service-desc">
-            Sus primeros días pasan en un suspiro. Capturamos cada pequeño detalle con cuidado, seguridad y delicadeza.
+            Cada mirada, cada promesa, cada instante irrepetible. Documentamos tu día con elegancia para que lo revivas
+            toda la vida.
           </p>
-          <p class="service-price">Desde $190</p>
-        </div>
-      </div>
-
-
-      <!-- KIDS / FAMILIAS -->
-      <div class="service-card reveal" data-service="familias">
-        <img src="img/service-familias.jpg" alt="Kids y Familias" class="service-card-img">
-        <div class="service-card-body">
-          <span class="service-icon">◐</span>
-          <h3 class="service-name">Kids</h3>
-          <p class="service-desc">
-            Risas reales, abrazos espontáneos y momentos auténticos. Fotografías que conservarán su esencia para siempre.
-          </p>
-          <p class="service-price">Desde $190</p>
+          <p class="service-price">Desde $600</p>
         </div>
       </div>
 
@@ -2222,23 +2132,39 @@
           <span class="service-icon">◎</span>
           <h3 class="service-name">Maternidad</h3>
           <p class="service-desc">
-            La belleza de la espera. Sesiones íntimas que celebran la conexión, la fuerza y el inicio de una nueva historia.
+            La belleza de la espera. Sesiones íntimas que celebran la conexión, la fuerza y el inicio de una nueva
+            historia.
           </p>
           <p class="service-price">Desde $190</p>
         </div>
       </div>
 
 
-      <!-- BODAS -->
-      <div class="service-card reveal" data-service="bodas">
-        <img src="img/service-bodas.jpg" alt="Bodas" class="service-card-img">
+      <!-- NEWBORN -->
+      <div class="service-card reveal" data-service="marca">
+        <img src="img/service-marca.jpg" alt="Newborn" class="service-card-img">
         <div class="service-card-body">
-          <span class="service-icon">✦</span>
-          <h3 class="service-name">Bodas</h3>
+          <span class="service-icon">◇</span>
+          <h3 class="service-name">Newborn</h3>
           <p class="service-desc">
-            Cada mirada, cada promesa, cada instante irrepetible. Documentamos tu día con elegancia para que lo revivas toda la vida.
+            Sus primeros días pasan en un suspiro. Capturamos cada pequeño detalle con cuidado, seguridad y delicadeza.
           </p>
-          <p class="service-price">Desde $600</p>
+          <p class="service-price">Desde $400</p>
+        </div>
+      </div>
+
+
+      <!-- KIDS / FAMILIAS -->
+      <div class="service-card reveal" data-service="familias">
+        <img src="img/service-familias.jpg" alt="Kids y Familias" class="service-card-img">
+        <div class="service-card-body">
+          <span class="service-icon">◐</span>
+          <h3 class="service-name">Kids</h3>
+          <p class="service-desc">
+            Risas reales, abrazos espontáneos y momentos auténticos. Fotografías que conservarán su esencia para
+            siempre.
+          </p>
+          <p class="service-price">Desde $190</p>
         </div>
       </div>
 
@@ -2250,7 +2176,8 @@
           <span class="service-icon">⬡</span>
           <h3 class="service-name">Eventos & Quinceañeras</h3>
           <p class="service-desc">
-            Celebraciones únicas que merecen ser recordadas. Capturamos la emoción, la elegancia y cada momento especial.
+            Celebraciones únicas que merecen ser recordadas. Capturamos la emoción, la elegancia y cada momento
+            especial.
           </p>
           <p class="service-price">Desde $600</p>
         </div>
@@ -2289,7 +2216,7 @@
         Llamar Ahora
       </a>
 
-      <a href="https://angelphotographymiami.com/booking" class="cta-btn">
+      <a href="#faq" class="cta-btn">
         Saber más
       </a>
 
@@ -2340,7 +2267,7 @@
       <span class="micro">Reserva tu sesión en segundos</span>
     </div>
 
-    <a href="https://angelphotographymiami.com/booking" class="cta-btn">
+    <a href="#" class="cta-btn">
       Reservar Ahora
     </a>
 
@@ -2614,7 +2541,7 @@
     <div class="cta-final-actions reveal">
 
       <!-- BOTÓN PRINCIPAL -->
-      <a href="https://angelphotographymiami.com/booking" class="cta-btn-solid">
+      <a href="#" class="cta-btn-solid">
         Reservar Ahora
       </a>
 
@@ -2651,30 +2578,30 @@
     <!-- NAVIGATION -->
     <div class="footer-col">
       <h4>Navegación</h4>
-      <a href="https://angelphotographymiami.com/booking">Portfolio</a>
-      <a href="https://angelphotographymiami.com/booking">Servicios</a>
-      <a href="https://angelphotographymiami.com/booking">Preguntas Frecuentes</a>
-      <a href="https://angelphotographymiami.com/booking">Reservar Ahora</a>
+      <a href="#portfolio">Portfolio</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#faq">Preguntas Frecuentes</a>
+      <a href="#contacto">Reservar Ahora</a>
     </div>
 
 
     <!-- SERVICES -->
     <div class="footer-col">
       <h4>Servicios</h4>
-      <a href="https://angelphotographymiami.com/booking">Bodas</a>
-      <a href="https://angelphotographymiami.com/booking">Maternidad</a>
-      <a href="https://angelphotographymiami.com/booking">Newborn & Kids</a>
-      <a href="https://angelphotographymiami.com/booking">Eventos & Quinceañeras</a>
-      <a href="https://angelphotographymiami.com/booking">Paquetes Exclusivos</a>
+      <a href="#servicios">Bodas</a>
+      <a href="#servicios">Maternidad</a>
+      <a href="#servicios">Newborn & Kids</a>
+      <a href="#servicios">Eventos & Quinceañeras</a>
+      <a href="#servicios">Paquetes Exclusivos</a>
     </div>
 
 
     <!-- CONTACT -->
     <div class="footer-col">
       <h4>Reservaciones</h4>
-      <a href="https://angelphotographymiami.com/booking">Reservar Sesión</a>
+      <a href="#">Reservar Sesión</a>
       <a href="tel:+17863184596">+1 (786) 318-4596</a>
-      <a href="https://angelphotographymiami.com/booking">Miami, Florida</a>
+      <a href="#">Miami, Florida</a>
     </div>
 
 
@@ -2738,7 +2665,7 @@
         <div class="brochure-divider"></div>
         <ul class="brochure-details" id="brochureDetails"></ul>
         <div class="brochure-footer">
-          <a href="https://angelphotographymiami.com/booking" class="brochure-cta">Reservar</a>
+          <a href="mailto:angelphoyollc@gmail.com" class="brochure-cta">Reservar</a>
           <span class="brochure-page-num" id="brochurePageNum"></span>
         </div>
       </div>
@@ -2910,6 +2837,7 @@
           'Sets, props y vestuario disponibles',
           'Estudio o exteriores: tú eliges el lugar',
           'Sesión de 1 a 3 horas según el paquete',
+          '6 a 35 fotos editadas profesionalmente',
           'Galería privada con descarga digital',
           'Todas las fotos originales incluidas',
 
@@ -3045,6 +2973,7 @@
         // DIGITAL OFFERS (tu sistema actual usa esto)
         details: [
           'Sesión íntima de 1 a 3 horas, dependiendo del paquete',
+          '6 a 35 fotos editadas profesionalmente',
           'Estudio o exteriores: tú eliges el lugar, nosotros capturamos el momento',
           'Incluido en todos los paquetes: sets, vestuario y todas las fotos originales de la sesión',
           'Galería privada con descarga digital',
@@ -3180,6 +3109,7 @@
           'Galería privada con descarga digital',
           'Opciones de álbum y canvas disponibles',
           'Sesión íntima de 1 a 3 horas, dependiendo del paquete',
+          '6 a 35 fotos editadas profesionalmente',
           'Estudio o exteriores: tú eliges el lugar, nosotros capturamos el momento',
           'Incluido en todos los paquetes: sets, vestuario y todas las fotos originales de la sesión',
           'Galería privada con descarga digital',
