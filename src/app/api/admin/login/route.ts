@@ -7,12 +7,9 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { email, password } = body
 
-    // Hardcoded for Vercel - UPDATE HERE TOO
-    const adminEmail = 'AngelPro@angel.com'
-    const adminPassword = 'AngelPro'
-
-    // Debug log
-    console.log('FULL DEBUG - body:', JSON.stringify(body), '| expected:', adminEmail, adminPassword)
+    // Simple test credentials
+    const adminEmail = 'admin'
+    const adminPassword = 'admin123'
 
     // Simple env-based auth for MVP
     if (email === adminEmail && password === adminPassword) {
