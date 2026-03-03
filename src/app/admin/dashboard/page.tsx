@@ -319,12 +319,20 @@ function HomeView({ stats, bookings, formatDate, onSelectBooking }: {
                     <div className="text-right shrink-0">
                       <p className={`text-xs ${isCancelled ? 'text-[#f5f0e8]/30' : 'text-[#f5f0e8]/70'}`}>{formatDate(booking.sessionDate)} - {booking.sessionTime}</p>
                       <div className="flex items-center justify-end gap-2 mt-1">
-                        <span className={`text-xs ${isCancelled ? 'text-[#ef4444]/50 line-through' : booking.status === 'confirmed' || booking.status === 'completed' ? 'text-[#60a5fa]' : 'text-[#eab308]'}`}>
-                          ${pending}
-                        </span>
-                        <span className="text-xs text-[#22c55e]">
-                          +${booking.depositPaid}
-                        </span>
+                        {booking.status === 'confirmed' || booking.status === 'completed' ? (
+                          <span className="text-xs text-[#22c55e]">
+                            ${booking.totalAmount}
+                          </span>
+                        ) : (
+                          <>
+                            <span className={`text-xs ${isCancelled ? 'text-[#ef4444]/50 line-through' : 'text-[#eab308]'}`}>
+                              ${pending}
+                            </span>
+                            <span className="text-xs text-[#22c55e]">
+                              +${booking.depositPaid}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -655,12 +663,20 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
                   <span>{booking.sessionTime}</span>
                 </div>
                 <div className="flex gap-2 items-center">
-                  <span className={`${booking.status === 'cancelled' ? 'line-through text-[#ef4444]/50' : booking.status === 'confirmed' || booking.status === 'completed' ? 'text-[#60a5fa]' : 'text-[#eab308]'}`}>
-                    ${booking.totalAmount - booking.depositPaid}
-                  </span>
-                  <span className="text-[#22c55e]">
-                    +${booking.depositPaid}
-                  </span>
+                  {booking.status === 'confirmed' || booking.status === 'completed' ? (
+                    <span className="text-[#22c55e]">
+                      ${booking.totalAmount}
+                    </span>
+                  ) : (
+                    <>
+                      <span className={`${booking.status === 'cancelled' ? 'line-through text-[#ef4444]/50' : 'text-[#eab308]'}`}>
+                        ${booking.totalAmount - booking.depositPaid}
+                      </span>
+                      <span className="text-[#22c55e]">
+                        +${booking.depositPaid}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
               <p className="text-xs text-[#c8a46e]/70 mt-2">{booking.serviceType} - {booking.serviceTier}</p>
