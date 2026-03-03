@@ -7,9 +7,9 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { email, password } = body
 
-    // Simple test credentials
+    // Simple test credentials - UPDATED
     const adminEmail = 'admin'
-    const adminPassword = 'admin123'
+    const adminPassword = 'admin'
 
     // Simple env-based auth for MVP
     if (email === adminEmail && password === adminPassword) {
