@@ -1,48 +1,128 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@prisma/client'
 
-export async function GET() {
+const prisma = new PrismaClient()
+
+// GET /api/bookings - List all bookings (admin)
+export async function GET(request: Request) {
   try {
+    // Check for admin token
+    const authHeader = request.headers.get('authorization')
+    const isAdmin = authHeader?.startsWith('Bearer admin-')
+
     const bookings = await prisma.booking.findMany({
-      orderBy: { date: 'asc' }
+      include: {
+        client: true
+      },
+      orderBy: { sessionDate: 'desc' }
     })
+
     return NextResponse.json(bookings)
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 })
+    console.error('Error fetching bookings:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
+// POST /api/bookings - Create new booking (client)
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { clientName, clientEmail, clientPhone, date, serviceType, notes } = body
+    const { 
+      clientName, 
+      clientEmail, 
+      clientPhone, 
+      sessionDate, 
+      sessionTime,
+      serviceType,
+      serviceTier,
+      totalAmount,
+      stripeSessionId
+    } = body
 
-    // Allow multiple bookings per day - no date check needed
-    // (User pays the fee, so they can book multiple days)
-
-    // The fee is $50, which counts towards the selected package
-    const prices: Record<string, number> = {
-      portraits: 150,
-      events: 300,
-      editorial: 250
-    }
-
-    const booking = await prisma.booking.create({
-      data: {
-        clientName,
-        clientEmail,
-        clientPhone,
-        date: new Date(date),
-        serviceType,
-        notes,
-        status: 'pending',
-        amount: 50 // $50 fee, counts towards package
+    // Check if slot is available
+    const existingSlot = await prisma.calendarSlot.findUnique({
+      where: {
+        date_time: {
+          date: new Date(sessionDate),
+          time: sessionTime
+        }
       }
     })
+
+    if (existingSlot?.status === 'booked') {
+      return NextResponse.json({ error: 'Este horario ya está reservado' }, { status: 400 })
+    }
+
+    // Check if day is blocked
+    const dayBlocked = await prisma.blockedDay.findUnique({
+      where: {
+        date: new Date(new Date(sessionDate).toISOString().split('T')[0])
+      }
+    })
+
+    if (dayBlocked) {
+      return NextResponse.json({ error: 'Este día está bloqueado' }, { status: 400 })
+    }
+
+    // Find or create client
+    let client = await prisma.client.findFirst({
+      where: { email: clientEmail }
+    })
+
+    if (!client) {
+      client = await prisma.client.create({
+        data: {
+          name: clientName,
+          email: clientEmail,
+          phone: clientPhone
+        }
+      })
+    }
+
+    // Create booking with slot
+    const booking = await prisma.booking.create({
+      data: {
+        clientId: client.id,
+        serviceType,
+        serviceTier,
+        sessionDate: new Date(sessionDate),
+        sessionTime,
+        totalAmount,
+        depositPaid: 100,
+        stripeSessionId,
+        status: 'confirmed'
+      },
+      include: {
+        client: true
+      }
+    })
+
+    // Mark slot as booked
+    await prisma.calendarSlot.upsert({
+      where: {
+        date_time: {
+          date: new Date(sessionDate),
+          time: sessionTime
+        }
+      },
+      create: {
+        date: new Date(sessionDate),
+        time: sessionTime,
+        status: 'booked',
+        bookingId: booking.id
+      },
+      update: {
+        status: 'booked',
+        bookingId: booking.id
+      }
+    })
+
+    // TODO: Send confirmation email
 
     return NextResponse.json(booking, { status: 201 })
   } catch (error) {
     console.error('Booking error:', error)
-    return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
+    return NextResponse.json({ error: 'Error al crear la reserva' }, { status: 500 })
   }
 }

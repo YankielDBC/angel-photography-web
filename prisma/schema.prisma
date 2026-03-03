@@ -10,31 +10,85 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Cliente
+model Client {
+  id            String    @id @default(cuid())
+  name          String
+  email         String
+  phone         String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bookings      Booking[]
+}
+
+// Reserva
 model Booking {
-  id          String   @id @default(cuid())
-  clientName  String
-  clientEmail String
-  clientPhone String
-  date        DateTime @unique
-  serviceType String
-  notes       String?
-  status      String   @default("pending") // pending, confirmed, completed, no_show, cancelled
-  amount      Float    @default(0)
-  paymentMethod String? // stripe, paypal, cashapp, zelle, cash
+  id              String   @id @default(cuid())
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id])
+  
+  // Datos de la sesión
+  serviceType     String   // pregnant, newborn, kids, wedding, eventos, exclusivo
+  serviceTier     String   // digital, silver, gold, platinum, diamond
+  sessionDate    DateTime
+  sessionTime    String   // HH:MM format
+  
+  // Pagos
+  totalAmount    Float
+  depositPaid    Float    @default(100) // Usually $100
+  remainingPaid  Float    @default(0)   // Paid on session day
+  paymentMethod  String?  // stripe, cash, zelle, etc.
   stripeSessionId String?
+  
+  // Estado
+  status         String   @default("pending") // pending, confirmed, completed, no_show, cancelled
+  notes          String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@unique([sessionDate, sessionTime]) // Prevent double booking
+}
+
+// Slots de calendario - disponibles, ocupados, o bloqueados
+model CalendarSlot {
+  id          String   @id @default(cuid())
+  date        DateTime // Date of the slot
+  time        String   // HH:MM format
+  status      String   @default("available") // available, booked, blocked_admin
+  bookingId   String?  // Reference to booking if booked
+  reason      String?  // Reason for blocking (admin only)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  @@unique([date, time])
 }
 
-model BlockedDate {
-  id        String   @id @default(cuid())
-  date      DateTime @unique
-  reason    String?
-  createdAt DateTime @default(now())
+// Días bloqueados por admin (todo el día)
+model BlockedDay {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  reason      String?
+  createdAt   DateTime @default(now())
 }
 
+// Configuración de horarios de trabajo
+model BusinessHours {
+  id          String   @id @default(cuid())
+  dayOfWeek   Int      // 0-6 (Sunday-Saturday)
+  startTime   String   // HH:MM
+  endTime     String   // HH:MM
+  isActive    Boolean  @default(true)
+  
+  @@unique([dayOfWeek])
+}
+
+// Admin
 model Admin {
-  id       String @id @default(cuid())
-  email    String @unique
-  password String
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String   // Hashed
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
