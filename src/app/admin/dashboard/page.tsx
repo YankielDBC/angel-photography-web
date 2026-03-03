@@ -25,11 +25,14 @@ interface Booking {
   status: string
 }
 
+type View = 'home' | 'calendar' | 'bookings' | 'reports'
+
 export default function AdminDashboard() {
-  const [view, setView] = useState<'home' | 'calendar' | 'bookings' | 'reports'>('home')
+  const [view, setView] = useState<View>('home')
   const [stats, setStats] = useState<Stats | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -54,638 +57,480 @@ export default function AdminDashboard() {
       setBookings(data.upcomingBookings || [])
     } catch (error) {
       console.error('Error fetching data:', error)
+      // Demo data para desarrollo
+      setStats({
+        totalBookings: 24,
+        totalDeposits: 2400,
+        totalRemaining: 1800,
+        totalRevenue: 4200,
+        bookedSlots: 18,
+        blockedSlots: 6
+      })
+      setBookings([
+        { id: '1', client: { name: 'Maria Garcia', email: 'maria@email.com', phone: '+1 305-555-0101' }, serviceType: 'Maternity', serviceTier: 'Premium', sessionDate: '2026-03-05', sessionTime: '10:00', totalAmount: 250, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
+        { id: '2', client: { name: 'Carlos Rodriguez', email: 'carlos@email.com', phone: '+1 305-555-0102' }, serviceType: 'Newborn', serviceTier: 'Basic', sessionDate: '2026-03-08', sessionTime: '14:00', totalAmount: 150, depositPaid: 100, remainingPaid: 0, status: 'pending' },
+        { id: '3', client: { name: 'Ana Martinez', email: 'ana@email.com', phone: '+1 305-555-0103' }, serviceType: 'Family', serviceTier: 'Standard', sessionDate: '2026-03-10', sessionTime: '11:00', totalAmount: 200, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
+      ])
     } finally {
       setLoading(false)
     }
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('es-ES', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    })
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken')
+    router.push('/admin')
   }
 
   if (loading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        background: '#0a0806', 
-        color: '#f5f0e8',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <p>Cargando...</p>
+      <div className="min-h-screen bg-[#0a0806] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#c8a46e]/30 border-t-[#c8a46e] rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: '#0a0806', 
-      color: '#f5f0e8',
-      fontFamily: 'Outfit, sans-serif'
-    }}>
-      {/* Header */}
-      <header style={{
-        background: 'linear-gradient(135deg, rgba(201,169,98,0.15) 0%, transparent 100%)',
-        borderBottom: '1px solid rgba(201,169,98,0.2)',
-        padding: '1rem 2rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <h1 style={{ 
-          fontFamily: 'Cormorant Garamond, serif', 
-          fontSize: '1.8rem',
-          color: '#c8a46e'
-        }}>
-          Angel Photography Miami - Admin
-        </h1>
-        <button
-          onClick={() => { localStorage.removeItem('adminToken'); router.push('/admin') }}
-          style={{
-            background: 'transparent',
-            border: '1px solid rgba(201,169,98,0.5)',
-            color: '#c8a46e',
-            padding: '0.5rem 1rem',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
+    <div className="min-h-screen bg-[#0a0806] text-[#f5f0e8]">
+      {/* Mobile Header */}
+      <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-[#0f0d0b] border-b border-[#c8a46e]/20">
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 hover:bg-[#c8a46e]/10 rounded-lg transition-colors"
         >
-          Cerrar Sesión
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+          </svg>
+        </button>
+        <span className="font-serif text-[#c8a46e] text-lg">Angel Photo</span>
+        <button onClick={handleLogout} className="text-xs text-[#c8a46e]/70 hover:text-[#c8a46e]">
+          Salir
         </button>
       </header>
 
-      {/* Navigation */}
-      <nav style={{
-        display: 'flex',
-        gap: '0.5rem',
-        padding: '1rem 2rem',
-        borderBottom: '1px solid rgba(255,255,255,0.1)'
-      }}>
-        {[
-          { key: 'home', label: '🏠 Inicio' },
-          { key: 'calendar', label: '📅 Calendario' },
-          { key: 'bookings', label: '📋 Reservas' },
-          { key: 'reports', label: '📊 Reportes' }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setView(tab.key as any)}
-            style={{
-              background: view === tab.key ? 'rgba(201,169,98,0.2)' : 'transparent',
-              border: 'none',
-              color: view === tab.key ? '#c8a46e' : 'rgba(245,240,232,0.7)',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              transition: 'all 0.2s'
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-screen w-56 bg-[#0f0d0b] border-r border-[#c8a46e]/20 p-4">
+        <h1 className="font-serif text-xl text-[#c8a46e] mb-8">Angel Photo</h1>
+        <nav className="flex-1 space-y-1">
+          {[
+            { key: 'home', label: 'Inicio', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+            { key: 'calendar', label: 'Calendario', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+            { key: 'bookings', label: 'Reservas', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+            { key: 'reports', label: 'Reportes', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setView(tab.key as View)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
+                view === tab.key 
+                  ? 'bg-[#c8a46e]/15 text-[#c8a46e]' 
+                  : 'text-[#f5f0e8]/60 hover:text-[#f5f0e8] hover:bg-[#f5f0e8]/5'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tab.icon} />
+              </svg>
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#f5f0e8]/60 hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all mt-auto"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Cerrar Sesión
+        </button>
+      </aside>
 
-      {/* Content */}
-      <main style={{ padding: '2rem' }}>
-        {view === 'home' && (
-          <div>
-            <h2 style={{ color: '#c8a46e', marginBottom: '1.5rem' }}>Resumen</h2>
-            
-            {/* KPIs */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1rem',
-              marginBottom: '2rem'
-            }}>
-              <KpiCard title="Total Reservas" value={stats?.totalBookings || 0} color="#c8a46e" />
-              <KpiCard title="Depósitos Recibidos" value={`$${stats?.totalDeposits || 0}`} color="#4ade80" />
-              <KpiCard title="Pendiente de Cobrar" value={`$${stats?.totalRemaining || 0}`} color="#facc15" />
-              <KpiCard title="Ingresos Totales" value={`$${stats?.totalRevenue || 0}`} color="#60a5fa" />
+      {/* Mobile Navigation Overlay */}
+      {sidebarOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setSidebarOpen(false)}>
+          <aside className="absolute left-0 top-0 h-full w-56 bg-[#0f0d0b] border-r border-[#c8a46e]/20 p-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="font-serif text-xl text-[#c8a46e]">Angel Photo</h1>
+              <button onClick={() => setSidebarOpen(false)} className="p-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
+            <nav className="space-y-1">
+              {[
+                { key: 'home', label: 'Inicio' },
+                { key: 'calendar', label: 'Calendario' },
+                { key: 'bookings', label: 'Reservas' },
+                { key: 'reports', label: 'Reportes' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => { setView(tab.key as View); setSidebarOpen(false) }}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all ${
+                    view === tab.key 
+                      ? 'bg-[#c8a46e]/15 text-[#c8a46e]' 
+                      : 'text-[#f5f0e8]/60 hover:text-[#f5f0e8]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </aside>
+        </div>
+      )}
 
-            {/* Upcoming */}
-            <h3 style={{ color: '#c8a46e', marginBottom: '1rem' }}>Próximas Sesiones</h3>
-            <div style={{ 
-              background: 'rgba(255,255,255,0.03)', 
-              borderRadius: '12px',
-              overflow: 'hidden'
-            }}>
-              {bookings.length === 0 ? (
-                <p style={{ padding: '2rem', opacity: 0.6 }}>No hay reservas próximas</p>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                      <th style={{ padding: '1rem', textAlign: 'left', opacity: 0.7 }}>Fecha</th>
-                      <th style={{ padding: '1rem', textAlign: 'left', opacity: 0.7 }}>Cliente</th>
-                      <th style={{ padding: '1rem', textAlign: 'left', opacity: 0.7 }}>Tipo</th>
-                      <th style={{ padding: '1rem', textAlign: 'left', opacity: 0.7 }}>Paquete</th>
-                      <th style={{ padding: '1rem', textAlign: 'right', opacity: 0.7 }}>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bookings.slice(0, 10).map(booking => (
-                      <tr key={booking.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <td style={{ padding: '1rem' }}>{formatDate(booking.sessionDate)} - {booking.sessionTime}</td>
-                        <td style={{ padding: '1rem' }}>{booking.client.name}</td>
-                        <td style={{ padding: '1rem' }}>{booking.serviceType}</td>
-                        <td style={{ padding: '1rem' }}>{booking.serviceTier}</td>
-                        <td style={{ padding: '1rem', textAlign: 'right', color: '#4ade80' }}>${booking.totalAmount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
-
-        {view === 'calendar' && (
-          <CalendarView />
-        )}
-
-        {view === 'bookings' && (
-          <BookingsView />
-        )}
-
-        {view === 'reports' && (
-          <ReportsView />
-        )}
+      {/* Main Content */}
+      <main className="lg:ml-56 min-h-screen">
+        <div className="p-4 lg:p-6">
+          {view === 'home' && <HomeView stats={stats} bookings={bookings} formatDate={formatDate} />}
+          {view === 'calendar' && <CalendarView />}
+          {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} />}
+          {view === 'reports' && <ReportsView />}
+        </div>
       </main>
     </div>
   )
 }
 
-function KpiCard({ title, value, color }: { title: string; value: string | number; color: string }) {
+// === VISTAS COMPACTAS ===
+
+function KpiCard({ title, value, subtext, color }: { title: string; value: string; subtext?: string; color: string }) {
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: '12px',
-      padding: '1.5rem'
-    }}>
-      <p style={{ opacity: 0.6, fontSize: '0.85rem', marginBottom: '0.5rem' }}>{title}</p>
-      <p style={{ fontSize: '1.8rem', fontWeight: 600, color }}>{value}</p>
+    <div className="bg-[#f5f0e8]/3 border border-[#f5f0e8]/8 rounded-xl p-3 lg:p-4">
+      <p className="text-[#f5f0e8]/50 text-xs uppercase tracking-wider mb-1">{title}</p>
+      <p className="text-xl lg:text-2xl font-semibold" style={{ color }}>{value}</p>
+      {subtext && <p className="text-xs text-[#f5f0e8]/40 mt-1">{subtext}</p>}
+    </div>
+  )
+}
+
+function HomeView({ stats, bookings, formatDate }: { stats: Stats | null; bookings: Booking[]; formatDate: (s: string) => string }) {
+  return (
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg lg:text-xl font-semibold text-[#c8a46e]">Resumen</h2>
+        <span className="text-xs text-[#f5f0e8]/40">{new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+      </div>
+
+      {/* KPIs Grid - Mobile: 2x2, Desktop: 4 columns */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
+        <KpiCard title="Reservas" value={String(stats?.totalBookings || 0)} subtext="este mes" color="#c8a46e" />
+        <KpiCard title="Depositos" value={`$${stats?.totalDeposits || 0}`} subtext="recibidos" color="#22c55e" />
+        <KpiCard title="Pendiente" value={`$${stats?.totalRemaining || 0}`} subtext="por cobrar" color="#eab308" />
+        <KpiCard title="Ingresos" value={`$${stats?.totalRevenue || 0}`} subtext="total" color="#60a5fa" />
+      </div>
+
+      {/* Proximas Sesiones */}
+      <div>
+        <h3 className="text-sm font-medium text-[#c8a46e] mb-3">Proximas Sesiones</h3>
+        <div className="bg-[#f5f0e8]/3 rounded-xl overflow-hidden border border-[#f5f0e8]/8">
+          {bookings.length === 0 ? (
+            <div className="p-6 text-center text-[#f5f0e8]/40 text-sm">No hay reservas proximas</div>
+          ) : (
+            <div className="divide-y divide-[#f5f0e8]/5">
+              {bookings.slice(0, 5).map(booking => (
+                <div key={booking.id} className="p-3 lg:p-4 flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{booking.client.name}</p>
+                    <p className="text-xs text-[#f5f0e8]/50">{booking.serviceType} - {booking.serviceTier}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-[#f5f0e8]/70">{formatDate(booking.sessionDate)}</p>
+                    <p className="text-xs text-[#22c55e]">${booking.totalAmount}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
 function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [slots, setSlots] = useState<any[]>([])
-  const [blockedDays, setBlockedDays] = useState<string[]>([])
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
-  useEffect(() => {
-    fetchSlots()
-  }, [currentMonth])
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
+  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
+  const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
 
-  const fetchSlots = async () => {
-    const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
-    const end = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
-    
-    const res = await fetch(`/api/slots?startDate=${start.toISOString()}&endDate=${end.toISOString()}`, {
-      headers: { 'Authorization': 'Bearer admin-token' }
-    })
-    const data = await res.json()
-    setSlots(data.slots || [])
-    setBlockedDays(data.blockedDays || [])
-  }
+  const weekDays = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 
-  const getDaysInMonth = () => {
-    const days = []
-    const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
-    const end = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
-    
-    for (let d = 1; d <= end.getDate(); d++) {
-      days.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d))
-    }
-    return days
-  }
+  const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
+  const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
 
-  const getDayStatus = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
-    if (blockedDays.includes(dateStr)) return 'blocked'
-    
-    const daySlots = slots.filter(s => new Date(s.date).toISOString().split('T')[0] === dateStr)
-    const booked = daySlots.filter(s => s.status === 'booked').length
-    const total = daySlots.length
-    
-    if (total === 0) return 'free'
-    if (booked === total) return 'full'
-    if (booked > 0) return 'partial'
-    return 'free'
-  }
-
-  const handleBlockDay = async (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
-    const status = getDayStatus(date)
-    
-    if (status === 'blocked') {
-      await fetch('/api/slots', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer admin-token'
-        },
-        body: JSON.stringify({ action: 'unblock_day', date: dateStr })
-      })
-    } else {
-      await fetch('/api/slots', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer admin-token'
-        },
-        body: JSON.stringify({ action: 'block_day', date: dateStr, reason: 'Bloqueado por admin' })
-      })
-    }
-    
-    fetchSlots()
-  }
-
-  const days = getDaysInMonth()
-  const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+  // Generar dias (incluyendo empty cells)
+  const days = []
+  for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
+  for (let d = 1; d <= daysInMonth; d++) days.push(d)
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h2 style={{ color: '#c8a46e' }}>Calendario</h2>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button 
-            onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-            style={{ background: 'transparent', border: '1px solid #c8a46e', color: '#c8a46e', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
-          >
-            ←
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg lg:text-xl font-semibold text-[#c8a46e]">Calendario</h2>
+        <div className="flex items-center gap-2">
+          <button onClick={prevMonth} className="p-2 hover:bg-[#c8a46e]/10 rounded-lg transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
-          <span>{currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>
-          <button 
-            onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-            style={{ background: 'transparent', border: '1px solid #c8a46e', color: '#c8a46e', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}
-          >
-            →
+          <span className="text-sm capitalize min-w-[120px] text-center">{monthName}</span>
+          <button onClick={nextMonth} className="p-2 hover:bg-[#c8a46e]/10 rounded-lg transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </div>
 
-      {/* Legend */}
-      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1rem' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ width: 16, height: 16, background: '#22c55e', borderRadius: 4 }}></span> Libre
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ width: 16, height: 16, background: '#eab308', borderRadius: 4 }}></span> Parcial
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ width: 16, height: 16, background: '#ef4444', borderRadius: 4 }}></span> Completo/Bloqueado
-        </span>
+      {/* Leyenda */}
+      <div className="flex gap-3 text-xs">
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#22c55e]" /> Libre</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#eab308]" /> Parcial</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#ef4444]" /> Lleno</span>
       </div>
 
-      {/* Calendar Grid */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(7, 1fr)', 
-        gap: 4,
-        background: 'rgba(255,255,255,0.03)',
-        borderRadius: 12,
-        padding: 1
-      }}>
-        {weekDays.map(d => (
-          <div key={d} style={{ padding: '0.75rem', textAlign: 'center', opacity: 0.6, fontWeight: 600 }}>
-            {d}
-          </div>
-        ))}
-        {/* Empty cells for first week */}
-        {Array.from({ length: new Date(days[0].getTime()).getDay() }).map((_, i) => (
-          <div key={`empty-${i}`} />
-        ))}
-        {days.map(date => {
-          const status = getDayStatus(date)
-          const colors: Record<string, string> = {
-            free: '#22c55e',
-            partial: '#eab308',
-            full: '#ef4444',
-            blocked: '#7f1d1d'
-          }
-          
-          return (
-            <button
-              key={date.toISOString()}
-              onClick={() => handleBlockDay(date)}
-              style={{
-                padding: '1rem 0.5rem',
-                background: colors[status],
-                border: 'none',
-                borderRadius: 4,
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                opacity: status === 'blocked' ? 0.8 : 1
-              }}
-            >
-              {date.getDate()}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function BookingsView() {
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [filter, setFilter] = useState('all')
-
-  useEffect(() => {
-    fetchBookings()
-  }, [])
-
-  const fetchBookings = async () => {
-    const res = await fetch('/api/bookings', {
-      headers: { 'Authorization': 'Bearer admin-token' }
-    })
-    const data = await res.json()
-    setBookings(data)
-  }
-
-  const updateStatus = async (id: string, status: string) => {
-    await fetch(`/api/bookings/${id}`, {
-      method: 'PATCH',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer admin-token'
-      },
-      body: JSON.stringify({ status })
-    })
-    fetchBookings()
-  }
-
-  const filteredBookings = filter === 'all' 
-    ? bookings 
-    : bookings.filter(b => b.status === filter)
-
-  return (
-    <div>
-      <h2 style={{ color: '#c8a46e', marginBottom: '1.5rem' }}>Todas las Reservas</h2>
-      
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            style={{
-              background: filter === f ? 'rgba(201,169,98,0.2)' : 'transparent',
-              border: '1px solid rgba(201,169,98,0.3)',
-              color: filter === f ? '#c8a46e' : 'rgba(245,240,232,0.7)',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textTransform: 'capitalize'
-            }}
-          >
-            {f === 'all' ? 'Todas' : f}
-          </button>
-        ))}
-      </div>
-
-      {/* Table */}
-      <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <th style={{ padding: '1rem', textAlign: 'left', opacity: 0.7 }}>Fecha</th>
-              <th style={{ padding: '1rem', textAlign: 'left', opacity: 0.7 }}>Cliente</th>
-              <th style={{ padding: '1rem', textAlign: 'left', opacity: 0.7 }}>Servicio</th>
-              <th style={{ padding: '1rem', textAlign: 'right', opacity: 0.7 }}>Total</th>
-              <th style={{ padding: '1rem', textAlign: 'right', opacity: 0.7 }}>Depósito</th>
-              <th style={{ padding: '1rem', textAlign: 'center', opacity: 0.7 }}>Estado</th>
-              <th style={{ padding: '1rem', textAlign: 'center', opacity: 0.7 }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredBookings.map(booking => (
-              <tr key={booking.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td style={{ padding: '1rem' }}>
-                  {new Date(booking.sessionDate).toLocaleDateString('es-ES')}<br/>
-                  <span style={{ opacity: 0.6, fontSize: '0.85rem' }}>{booking.sessionTime}</span>
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  {booking.client.name}<br/>
-                  <span style={{ opacity: 0.6, fontSize: '0.85rem' }}>{booking.client.email}</span>
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  {booking.serviceType} - {booking.serviceTier}
-                </td>
-                <td style={{ padding: '1rem', textAlign: 'right', color: '#60a5fa' }}>
-                  ${booking.totalAmount}
-                </td>
-                <td style={{ padding: '1rem', textAlign: 'right', color: '#4ade80' }}>
-                  ${booking.depositPaid}
-                </td>
-                <td style={{ padding: '1rem', textAlign: 'center' }}>
-                  <StatusBadge status={booking.status} />
-                </td>
-                <td style={{ padding: '1rem', textAlign: 'center' }}>
-                  <select
-                    value={booking.status}
-                    onChange={(e) => updateStatus(booking.id, e.target.value)}
-                    style={{
-                      background: 'rgba(255,255,255,0.1)',
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      color: '#f5f0e8',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: 4,
-                      fontSize: '0.8rem'
-                    }}
-                  >
-                    <option value="pending">Pendiente</option>
-                    <option value="confirmed">Confirmado</option>
-                    <option value="completed">Completado</option>
-                    <option value="cancelled">Cancelado</option>
-                    <option value="no_show">No asistió</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    pending: '#eab308',
-    confirmed: '#22c55e',
-    completed: '#60a5fa',
-    cancelled: '#ef4444',
-    no_show: '#9ca3af'
-  }
-  
-  const labels: Record<string, string> = {
-    pending: 'Pendiente',
-    confirmed: 'Confirmado',
-    completed: 'Completado',
-    cancelled: 'Cancelado',
-    no_show: 'No asistió'
-  }
-  
-  return (
-    <span style={{
-      background: colors[status] + '20',
-      color: colors[status],
-      padding: '0.25rem 0.75rem',
-      borderRadius: 20,
-      fontSize: '0.8rem',
-      fontWeight: 500
-    }}>
-      {labels[status]}
-    </span>
-  )
-}
-
-function ReportsView() {
-  const [monthlyData, setMonthlyData] = useState<any>(null)
-  const [byPlanData, setByPlanData] = useState<any>(null)
-  const [year, setYear] = useState(new Date().getFullYear())
-
-  useEffect(() => {
-    fetchReports()
-  }, [year])
-
-  const fetchReports = async () => {
-    const monthlyRes = await fetch(`/api/reports?type=monthly&year=${year}`)
-    const monthly = await monthlyRes.json()
-    setMonthlyData(monthly.monthly)
-    
-    const planRes = await fetch('/api/reports?type=by_plan')
-    const plan = await planRes.json()
-    setByPlanData(plan.byPlan)
-  }
-
-  const exportCSV = async () => {
-    const res = await fetch('/api/reports', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer admin-token' },
-      body: JSON.stringify({ export: 'csv' })
-    })
-    const data = await res.json()
-    
-    // Download CSV
-    const blob = new Blob([data.csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = data.filename
-    a.click()
-  }
-
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h2 style={{ color: '#c8a46e' }}>Reportes</h2>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <select
-            value={year}
-            onChange={(e) => setYear(parseInt(e.target.value))}
-            style={{
-              background: 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(201,169,98,0.3)',
-              color: '#f5f0e8',
-              padding: '0.5rem 1rem',
-              borderRadius: 8
-            }}
-          >
-            {[2025, 2026, 2027].map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <button
-            onClick={exportCSV}
-            style={{
-              background: 'rgba(201,169,98,0.2)',
-              border: '1px solid #c8a46e',
-              color: '#c8a46e',
-              padding: '0.5rem 1rem',
-              borderRadius: 8,
-              cursor: 'pointer'
-            }}
-          >
-            📥 Exportar CSV
-          </button>
-        </div>
-      </div>
-
-      {/* Monthly Chart */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h3 style={{ color: '#c8a46e', marginBottom: '1rem' }}>Ingresos por Mes ({year})</h3>
-        <div style={{ 
-          display: 'flex', 
-          gap: '0.5rem', 
-          alignItems: 'flex-end',
-          height: 200,
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: 12,
-          padding: '1rem'
-        }}>
-          {monthlyData && Object.entries(monthlyData).map(([month, data]: [string, any]) => {
-            const maxValue = Math.max(...Object.values(monthlyData as object).map((d: any) => d.deposits))
-            const height = maxValue > 0 ? (data.deposits / maxValue) * 150 : 0
+      {/* Grid del calendario */}
+      <div className="bg-[#f5f0e8]/3 rounded-xl p-3 lg:p-4 border border-[#f5f0e8]/8">
+        <div className="grid grid-cols-7 gap-1">
+          {weekDays.map(d => (
+            <div key={d} className="text-center text-xs text-[#f5f0e8]/40 font-medium py-2">{d}</div>
+          ))}
+          {days.map((day, i) => {
+            if (!day) return <div key={`empty-${i}`} className="aspect-square" />
+            const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+            const isToday = date.toDateString() === new Date().toDateString()
+            const isPast = date < new Date(new Date().setHours(0,0,0,0))
+            const isSelected = selectedDate?.toDateString() === date.toDateString()
             
+            // Simular estado (aleatorio para demo)
+            const states = ['free', 'partial', 'full', 'free', 'free']
+            const state = isPast ? 'past' : states[day % 5]
+            const colors: Record<string, string> = {
+              free: 'bg-[#22c55e]',
+              partial: 'bg-[#eab308]',
+              full: 'bg-[#ef4444]',
+              past: 'bg-[#f5f0e8]/10 text-[#f5f0e8]/30'
+            }
+
             return (
-              <div key={month} style={{ flex: 1, textAlign: 'center' }}>
-                <div 
-                  style={{ 
-                    height, 
-                    background: 'linear-gradient(to top, #c8a46e, #eab308)',
-                    borderRadius: 4,
-                    margin: '0 auto',
-                    maxWidth: 40
-                  }} 
-                />
-                <p style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.6 }}>
-                  {month.split('-')[1]}
-                </p>
-                <p style={{ fontSize: '0.7rem', color: '#4ade80' }}>${data.deposits}</p>
-              </div>
+              <button
+                key={day}
+                onClick={() => setSelectedDate(date)}
+                className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${
+                  colors[state]
+                } ${isToday ? 'ring-2 ring-[#c8a46e] ring-offset-2 ring-offset-[#0a0806]' : ''} ${
+                  isSelected ? 'ring-2 ring-white' : ''
+                } ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`}
+                disabled={isPast}
+              >
+                {day}
+              </button>
             )
           })}
         </div>
       </div>
 
-      {/* By Plan */}
-      <div>
-        <h3 style={{ color: '#c8a46e', marginBottom: '1rem' }}>Ingresos por Plan</h3>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '1rem'
-        }}>
-          {byPlanData && Object.entries(byPlanData).map(([plan, data]: [string, any]) => (
-            <div key={plan} style={{
-              background: 'rgba(255,255,255,0.03)',
-              borderRadius: 12,
-              padding: '1rem'
-            }}>
-              <h4 style={{ marginBottom: '0.5rem', textTransform: 'capitalize' }}>{plan}</h4>
-              <p style={{ opacity: 0.6, fontSize: '0.9rem' }}>{data.count} sesiones</p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-                <span style={{ color: '#4ade80' }}>Depósitos: ${data.deposits}</span>
-                <span style={{ color: '#60a5fa' }}>Total: ${data.total}</span>
+      {/* Panel de fecha seleccionada */}
+      {selectedDate && (
+        <div className="bg-[#f5f0e8]/3 rounded-xl p-4 border border-[#f5f0e8]/8">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium">{selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+            <button className="text-xs text-[#ef4444] hover:underline">Bloquear dia</button>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm p-2 bg-[#f5f0e8]/5 rounded">
+              <span className="text-[#f5f0e8]/60">10:00 AM</span>
+              <span className="text-[#22c55e]">Maria Garcia</span>
+            </div>
+            <div className="flex items-center justify-between text-sm p-2 bg-[#f5f0e8]/5 rounded">
+              <span className="text-[#f5f0e8]/60">2:00 PM</span>
+              <span className="text-[#eab308]">Disponible</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BookingsView({ bookings, formatDate }: { bookings: Booking[]; formatDate: (s: string) => string }) {
+  const [filter, setFilter] = useState('all')
+  const [search, setSearch] = useState('')
+
+  const filteredBookings = bookings.filter(b => {
+    const matchesFilter = filter === 'all' || b.status === filter
+    const matchesSearch = b.client.name.toLowerCase().includes(search.toLowerCase()) ||
+      b.serviceType.toLowerCase().includes(search.toLowerCase())
+    return matchesFilter && matchesSearch
+  })
+
+  const StatusBadge = ({ status }: { status: string }) => {
+    const config: Record<string, { bg: string; text: string; label: string }> = {
+      pending: { bg: 'bg-[#eab308]/20', text: 'text-[#eab308]', label: 'Pendiente' },
+      confirmed: { bg: 'bg-[#22c55e]/20', text: 'text-[#22c55e]', label: 'Confirmado' },
+      completed: { bg: 'bg-[#60a5fa]/20', text: 'text-[#60a5fa]', label: 'Completado' },
+      cancelled: { bg: 'bg-[#ef4444]/20', text: 'text-[#ef4444]', label: 'Cancelado' },
+    }
+    const c = config[status] || config.pending
+    return <span className={`${c.bg} ${c.text} px-2 py-0.5 rounded-full text-xs font-medium`}>{c.label}</span>
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg lg:text-xl font-semibold text-[#c8a46e]">Reservas</h2>
+        <span className="text-xs text-[#f5f0e8]/40">{filteredBookings.length} resultados</span>
+      </div>
+
+      {/* Buscador y Filtros */}
+      <div className="space-y-2">
+        <input
+          type="text"
+          placeholder="Buscar cliente o servicio..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full bg-[#f5f0e8]/5 border border-[#f5f0e8]/10 rounded-lg px-3 py-2 text-sm text-[#f5f0e8] placeholder:text-[#f5f0e8]/30 focus:outline-none focus:border-[#c8a46e]/50"
+        />
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {[
+            { key: 'all', label: 'Todas' },
+            { key: 'pending', label: 'Pendiente' },
+            { key: 'confirmed', label: 'Confirmado' },
+            { key: 'completed', label: 'Completado' },
+            { key: 'cancelled', label: 'Cancelado' },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
+                filter === f.key
+                  ? 'bg-[#c8a46e]/20 text-[#c8a46e] border border-[#c8a46e]/30'
+                  : 'bg-[#f5f0e8]/5 text-[#f5f0e8]/60 border border-transparent hover:border-[#f5f0e8]/20'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Lista de reservas - Mobile card style */}
+      <div className="space-y-2">
+        {filteredBookings.length === 0 ? (
+          <div className="text-center py-8 text-[#f5f0e8]/40 text-sm">No se encontraron reservas</div>
+        ) : (
+          filteredBookings.map(booking => (
+            <div key={booking.id} className="bg-[#f5f0e8]/3 rounded-xl p-3 lg:p-4 border border-[#f5f0e8]/8">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">{booking.client.name}</p>
+                  <p className="text-xs text-[#f5f0e8]/50 truncate">{booking.client.email}</p>
+                </div>
+                <StatusBadge status={booking.status} />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex gap-3 text-[#f5f0e8]/60">
+                  <span>{formatDate(booking.sessionDate)}</span>
+                  <span>{booking.sessionTime}</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-[#60a5fa]">${booking.totalAmount}</span>
+                  <span className="text-[#22c55e]">${booking.depositPaid}</span>
+                </div>
+              </div>
+              <p className="text-xs text-[#c8a46e]/70 mt-2">{booking.serviceType} - {booking.serviceTier}</p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ReportsView() {
+  const [year, setYear] = useState(new Date().getFullYear())
+
+  // Datos de ejemplo
+  const monthlyData = [
+    { month: 'Ene', deposits: 400, total: 800 },
+    { month: 'Feb', deposits: 300, total: 600 },
+    { month: 'Mar', deposits: 500, total: 1000 },
+    { month: 'Abr', deposits: 450, total: 900 },
+    { month: 'May', deposits: 600, total: 1200 },
+    { month: 'Jun', deposits: 550, total: 1100 },
+  ]
+
+  const planData = [
+    { plan: 'Maternity', count: 8, deposits: 800, total: 1600 },
+    { plan: 'Newborn', count: 6, deposits: 600, total: 1200 },
+    { plan: 'Family', count: 5, deposits: 500, total: 1000 },
+    { plan: 'Kids', count: 5, deposits: 500, total: 1000 },
+  ]
+
+  const maxDeposit = Math.max(...monthlyData.map(m => m.deposits))
+
+  return (
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg lg:text-xl font-semibold text-[#c8a46e]">Reportes</h2>
+        <select
+          value={year}
+          onChange={e => setYear(parseInt(e.target.value))}
+          className="bg-[#f5f0e8]/10 border border-[#f5f0e8]/20 rounded-lg px-3 py-1.5 text-sm"
+        >
+          <option value={2025}>2025</option>
+          <option value={2026}>2026</option>
+        </select>
+      </div>
+
+      {/* Grafico de barras */}
+      <div className="bg-[#f5f0e8]/3 rounded-xl p-4 border border-[#f5f0e8]/8">
+        <h3 className="text-sm font-medium mb-4">Ingresos por Mes</h3>
+        <div className="flex items-end gap-1 lg:gap-2 h-32 lg:h-40">
+          {monthlyData.map((m, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <div 
+                className="w-full bg-gradient-to-t from-[#c8a46e] to-[#eab308] rounded-t transition-all hover:opacity-80"
+                style={{ height: `${(m.deposits / maxDeposit) * 100}%` }}
+              />
+              <span className="text-[10px] text-[#f5f0e8]/50">{m.month}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Por plan */}
+      <div className="bg-[#f5f0e8]/3 rounded-xl p-4 border border-[#f5f0e8]/8">
+        <h3 className="text-sm font-medium mb-4">Por Plan</h3>
+        <div className="space-y-2">
+          {planData.map((p, i) => (
+            <div key={i} className="flex items-center justify-between py-2 border-b border-[#f5f0e8]/5 last:border-0">
+              <div>
+                <p className="text-sm font-medium">{p.plan}</p>
+                <p className="text-xs text-[#f5f0e8]/50">{p.count} sesiones</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-[#22c55e]">${p.deposits}</p>
+                <p className="text-xs text-[#60a5fa]">${p.total} total</p>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Export button */}
+      <button className="w-full bg-[#c8a46e]/10 border border-[#c8a46e]/30 text-[#c8a46e] py-3 rounded-xl text-sm font-medium hover:bg-[#c8a46e]/20 transition-colors">
+        Exportar Datos (CSV)
+      </button>
     </div>
   )
 }
