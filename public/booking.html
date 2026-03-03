@@ -688,6 +688,10 @@
             <button class="btn-primary" id="continue-btn-2" disabled>
                 Continuar
             </button>
+
+            <button class="btn-secondary" id="back-btn-1" style="margin-top: 12px; width: 100%; padding: 14px; border-radius: 12px; background: transparent; border: 1px solid var(--border); color: var(--text); cursor: pointer; font-size: 14px;">
+                ← Volver
+            </button>
         </section>
 
         <!-- Section 3: Confirm & Pay -->
@@ -731,9 +735,14 @@
                 <a href="#servicios" onclick="window.location.href='/#servicios'; return true;" style="color: var(--accent);">¿Tienes dudas? Revisa nuestros paquetes aquí</a>
             </div>
 
-            <button class="btn-primary" id="pay-btn">
-                Pagar $100 de Reserva
-            </button>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-secondary" id="back-btn-2" style="flex: 1; padding: 14px; border-radius: 12px; background: transparent; border: 1px solid var(--border); color: var(--text); cursor: pointer; font-size: 14px;">
+                    ← Volver
+                </button>
+                <button class="btn-primary" id="pay-btn" style="flex: 2;">
+                    Pagar $100 de Reserva
+                </button>
+            </div>
 
             <div style="text-align: center; margin-top: 16px; font-size: 12px; opacity: 0.7;">
                 <a href="/terminos.html" target="_blank" style="color: var(--accent);">Términos y Condiciones</a> | 
@@ -1025,6 +1034,21 @@
         document.getElementById('pay-btn').addEventListener('click', () => {
             // Redirect to Stripe checkout
             window.location.href = 'https://buy.stripe.com/test_28E9AT6Qt52y4SD2FTdEs00';
+        });
+
+        // ==================== BACK BUTTON ====================
+        document.getElementById('back-btn-2').addEventListener('click', () => {
+            step3.classList.remove('active');
+            step2.classList.add('active');
+            updateSteps(2);
+            window.scrollTo(0, 0);
+        });
+
+        document.getElementById('back-btn-1').addEventListener('click', () => {
+            step2.classList.remove('active');
+            step1.classList.add('active');
+            updateSteps(1);
+            window.scrollTo(0, 0);
         });
 
         // Initialize
