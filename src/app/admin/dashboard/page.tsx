@@ -358,11 +358,15 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
   const [dayStatus, setDayStatus] = useState<Record<string, 'free' | 'partial' | 'full' | 'blocked'>>({})
   const [viewOnlyModal, setViewOnlyModal] = useState<Booking | null>(null)
   const [blockedSlots, setBlockedSlots] = useState<Record<string, string[]>>({})
+  const [slotReasons, setSlotReasons] = useState<Record<string, Record<string, string>>>({}) // date -> time -> reason
   const [blockedDays, setBlockedDays] = useState<string[]>([])
   const [blockedReasons, setBlockedReasons] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [showBlockModal, setShowBlockModal] = useState(false)
   const [blockReason, setBlockReason] = useState('')
+  const [blockSlotTime, setBlockSlotTime] = useState<string | null>(null)
+  const [showNoteModal, setShowNoteModal] = useState(false)
+  const [noteText, setNoteText] = useState('')
 
   useEffect(() => { fetchBlockedSlots(); fetchBlockedDays() }, [])
   
@@ -385,22 +389,45 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
       const res = await fetch('/api/blocked-slots', { headers: { 'Authorization': 'Bearer admin-token' } })
       const slots = await res.json()
       const grouped: Record<string, string[]> = {}
+      const reasons: Record<string, Record<string, string>> = {}
       slots.forEach((s: any) => {
         const dateKey = new Date(s.date).toISOString().split('T')[0]
         if (!grouped[dateKey]) grouped[dateKey] = []
         grouped[dateKey].push(s.time)
+        if (!reasons[dateKey]) reasons[dateKey] = {}
+        reasons[dateKey][s.time] = s.reason || ''
       })
       setBlockedSlots(grouped)
+      setSlotReasons(reasons)
     } catch (e) { console.log('Demo mode') }
   }
   const blockSlot = async (date: Date, time: string) => {
     setLoading(true)
     const dateKey = getDateKey(date)
     try {
-      await fetch('/api/blocked-slots', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer admin-token' }, body: JSON.stringify({ date: dateKey, time }) })
+      await fetch('/api/blocked-slots', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer admin-token' }, 
+        body: JSON.stringify({ date: dateKey, time, reason: blockReason || null }) 
+      })
       setBlockedSlots(prev => ({ ...prev, [dateKey]: [...(prev[dateKey] || []), time] }))
-    } catch (e) { setBlockedSlots(prev => ({ ...prev, [dateKey]: [...(prev[dateKey] || []), time] })) }
+      setSlotReasons(prev => ({ ...prev, [dateKey]: { ...(prev[dateKey] || {}), [time]: blockReason } }))
+      setShowBlockModal(false)
+      setBlockReason('')
+      setBlockSlotTime(null)
+    } catch (e) { 
+      setBlockedSlots(prev => ({ ...prev, [dateKey]: [...(prev[dateKey] || []), time] }))
+      setSlotReasons(prev => ({ ...prev, [dateKey]: { ...(prev[dateKey] || {}), [time]: blockReason } }))
+      setShowBlockModal(false)
+      setBlockReason('')
+      setBlockSlotTime(null)
+    }
     setLoading(false)
+  }
+
+  const openBlockSlotModal = (time: string) => {
+    setBlockSlotTime(time)
+    setShowBlockModal(true)
   }
   const unblockSlot = async (date: Date, time: string) => {
     setLoading(true)
@@ -533,7 +560,12 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
               isDayBlocked ? (
                 <div className="flex items-center gap-2">
                   {blockedReasons[selectedDateKey!] && (
-                    <span className="text-xs text-gray-500 italic">"{blockedReasons[selectedDateKey!]}"</span>
+                    <button 
+                      onClick={() => { setNoteText(blockedReasons[selectedDateKey!]); setShowNoteModal(true) }}
+                      className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-700 hover:bg-amber-200"
+                    >
+                      Ver nota
+                    </button>
                   )}
                   <button onClick={() => !loading && unblockDay(selectedDate!)} disabled={loading} className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200">Desbloquear</button>
                 </div>
@@ -550,7 +582,25 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
               return (
                 <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isDayBlocked ? 'bg-gray-50 opacity-50' : isBlocked ? 'bg-gray-100' : isAvailable ? 'bg-green-50' : 'bg-amber-50'}`}>
                   <span className="text-gray-600">{time}</span>
-                  {isDayBlocked ? <span className="text-xs text-gray-400">Bloqueado</span> : isBlocked ? <button onClick={() => !loading && unblockSlot(selectedDate!, time)} disabled={loading} className="text-xs px-2 py-1 rounded bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50">Desbloquear</button> : isAvailable ? <div className="flex items-center gap-2"><span className="text-green-600">Disponible</span><button onClick={() => !loading && blockSlot(selectedDate!, time)} disabled={loading} className="text-xs px-2 py-1 rounded bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50">Bloquear</button></div> : bookingAtTime ? <button onClick={() => setViewOnlyModal(bookingAtTime)} className="text-amber-600 hover:underline">{bookingAtTime.client.name}</button> : null}
+                  {isDayBlocked ? (
+                    <span className="text-xs text-gray-400">Bloqueado</span>
+                  ) : isBlocked ? (
+                    <div className="flex items-center gap-2">
+                      {slotReasons[selectedDateKey!]?.[time] && (
+                        <button 
+                          onClick={() => { setNoteText(slotReasons[selectedDateKey!][time]); setShowNoteModal(true) }}
+                          className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-700 hover:bg-amber-200"
+                        >
+                          Ver nota
+                        </button>
+                      )}
+                      <button onClick={() => !loading && unblockSlot(selectedDate!, time)} disabled={loading} className="text-xs px-2 py-1 rounded bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50">Desbloquear</button>
+                    </div>
+                  ) : isAvailable ? (
+                    <div className="flex items-center gap-2"><span className="text-green-600">Disponible</span><button onClick={() => openBlockSlotModal(time)} disabled={loading} className="text-xs px-2 py-1 rounded bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50">Bloquear</button></div>
+                  ) : bookingAtTime ? (
+                    <button onClick={() => setViewOnlyModal(bookingAtTime)} className="text-amber-600 hover:underline">{bookingAtTime.client.name}</button>
+                  ) : null}
                 </div>
               )
             })}
@@ -559,12 +609,12 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
       )}
       {viewOnlyModal && <BookingDetailModal booking={viewOnlyModal} onClose={() => setViewOnlyModal(null)} />}
       
-      {/* Block Day Modal */}
+      {/* Block Day/Slot Modal */}
       {showBlockModal && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowBlockModal(false)}>
           <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-xl" onClick={e => e.stopPropagation()}>
             <div className="bg-red-50 p-4 border-b border-red-100">
-              <h3 className="font-semibold text-red-700">Bloquear Día</h3>
+              <h3 className="font-semibold text-red-700">{blockSlotTime ? `Bloquear Horario ${blockSlotTime}` : 'Bloquear Día'}</h3>
             </div>
             <div className="p-4 space-y-4">
               <div>
@@ -578,9 +628,32 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
                 />
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">Cancelar</button>
-                <button onClick={() => blockDay(selectedDate!)} disabled={loading} className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 disabled:opacity-50">Bloquear</button>
+                <button onClick={() => { setShowBlockModal(false); setBlockSlotTime(null); setBlockReason('') }} className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">Cancelar</button>
+                <button 
+                  onClick={() => blockSlotTime ? blockSlot(selectedDate!, blockSlotTime) : blockDay(selectedDate!)} 
+                  disabled={loading} 
+                  className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+                >
+                  Bloquear
+                </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Note Modal */}
+      {showNoteModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowNoteModal(false)}>
+          <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-amber-50 p-4 border-b border-amber-100">
+              <h3 className="font-semibold text-amber-700">Nota</h3>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{noteText || 'Sin nota'}</p>
+            </div>
+            <div className="p-4 border-t border-gray-100">
+              <button onClick={() => setShowNoteModal(false)} className="w-full py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">Cerrar</button>
             </div>
           </div>
         </div>
