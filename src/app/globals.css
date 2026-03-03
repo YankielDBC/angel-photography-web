@@ -1,16 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0f;
-  --foreground: #f8f8f8;
-  --primary: #0a0a0f;
-  --secondary: #12121a;
-  --accent: #c9a962;
-  --accent-light: #e8d5a3;
-  --muted: #9ca3af;
-  --muted-dark: #6b7280;
-  --glass: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --background: #f8f6f3;
+  --foreground: #1a1a1a;
+  --primary: #ffffff;
+  --secondary: #f0ede8;
+  --accent: #b8964c;
+  --accent-light: #d4b87a;
+  --muted: #6b7280;
+  --muted-dark: #4b5563;
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(184, 150, 76, 0.2);
+}
+
+/* Admin Dashboard - Light Theme Override */
+.admin-light {
+  --admin-bg: #fafaf9;
+  --admin-surface: #ffffff;
+  --admin-text: #1c1917;
+  --admin-text-muted: #78716c;
+  --admin-border: #e7e5e4;
+  --admin-accent: #b8964c;
+  --admin-accent-light: #fef3c7;
+  --admin-success: #22c55e;
+  --admin-warning: #eab308;
+  --admin-danger: #ef4444;
+}
+
+.admin-light .admin-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+}
+
+.admin-light .admin-sidebar {
+  background: var(--admin-surface);
+  border-right: 1px solid var(--admin-border);
 }
 
 @theme inline {
