@@ -834,14 +834,14 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
                         Bloquear
                       </button>
                     </div>
-                  ) : (
+                  ) : bookingAtTime ? (
                     <button
                       onClick={() => setViewOnlyModal(bookingAtTime)}
                       className="text-[#eab308] hover:underline"
                     >
                       {bookingAtTime.client.name}
                     </button>
-                  )}
+                  ) : null}
                 </div>
               )
             })}
