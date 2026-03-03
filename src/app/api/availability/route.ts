@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const year = searchParams.get('year')
 
     // Get all blocked days
-    const blockedDays = await prisma.blockedDate.findMany({
+    const blockedDays = await prisma.blockedDay.findMany({
       select: { date: true }
     })
     const blockedDaysSet = new Set(
