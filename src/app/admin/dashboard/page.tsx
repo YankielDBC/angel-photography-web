@@ -359,9 +359,26 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
   const [viewOnlyModal, setViewOnlyModal] = useState<Booking | null>(null)
   const [blockedSlots, setBlockedSlots] = useState<Record<string, string[]>>({})
   const [blockedDays, setBlockedDays] = useState<string[]>([])
+  const [blockedReasons, setBlockedReasons] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [showBlockModal, setShowBlockModal] = useState(false)
+  const [blockReason, setBlockReason] = useState('')
 
   useEffect(() => { fetchBlockedSlots(); fetchBlockedDays() }, [])
+  
+  const fetchBlockedDays = async () => {
+    try {
+      const res = await fetch('/api/blocked-dates', { headers: { 'Authorization': 'Bearer admin-token' } })
+      const days = await res.json()
+      setBlockedDays(days.map((d: any) => new Date(d.date).toISOString().split('T')[0]))
+      const reasons: Record<string, string> = {}
+      days.forEach((d: any) => {
+        const dateKey = new Date(d.date).toISOString().split('T')[0]
+        reasons[dateKey] = d.reason || ''
+      })
+      setBlockedReasons(reasons)
+    } catch (e) { console.log('Demo mode') }
+  }
   
   const fetchBlockedDays = async () => {
     try {
@@ -407,9 +424,21 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
     setLoading(true)
     const dateKey = getDateKey(date)
     try {
-      await fetch('/api/blocked-dates', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer admin-token' }, body: JSON.stringify({ date: dateKey, reason: 'Bloqueado por admin' }) })
+      await fetch('/api/blocked-dates', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer admin-token' }, 
+        body: JSON.stringify({ date: dateKey, reason: blockReason || null }) 
+      })
       setBlockedDays(prev => [...prev, dateKey])
-    } catch (e) { setBlockedDays(prev => [...prev, dateKey]) }
+      setBlockedReasons(prev => ({ ...prev, [dateKey]: blockReason }))
+      setShowBlockModal(false)
+      setBlockReason('')
+    } catch (e) { 
+      setBlockedDays(prev => [...prev, dateKey])
+      setBlockedReasons(prev => ({ ...prev, [dateKey]: blockReason }))
+      setShowBlockModal(false)
+      setBlockReason('')
+    }
     setLoading(false)
   }
 
@@ -510,9 +539,14 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
             <h3 className="text-sm font-medium">{selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
             {!isPastDate(selectedDate) && (
               isDayBlocked ? (
-                <button onClick={() => !loading && unblockDay(selectedDate!)} disabled={loading} className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200">Desbloquear día</button>
+                <div className="flex items-center gap-2">
+                  {blockedReasons[selectedDateKey!] && (
+                    <span className="text-xs text-gray-500 italic">"{blockedReasons[selectedDateKey!]}"</span>
+                  )}
+                  <button onClick={() => !loading && unblockDay(selectedDate!)} disabled={loading} className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200">Desbloquear</button>
+                </div>
               ) : (
-                <button onClick={() => !loading && blockDay(selectedDate!)} disabled={loading} className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">Bloquear día</button>
+                <button onClick={() => setShowBlockModal(true)} disabled={loading} className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">Bloquear día</button>
               )
             )}
           </div>
@@ -532,6 +566,33 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
         </div>
       )}
       {viewOnlyModal && <BookingDetailModal booking={viewOnlyModal} onClose={() => setViewOnlyModal(null)} />}
+      
+      {/* Block Day Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowBlockModal(false)}>
+          <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-red-50 p-4 border-b border-red-100">
+              <h3 className="font-semibold text-red-700">Bloquear Día</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Motivo (opcional)</label>
+                <textarea 
+                  value={blockReason}
+                  onChange={e => setBlockReason(e.target.value)}
+                  placeholder="Ej: Vacaciones, evento personal..."
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:border-red-400"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">Cancelar</button>
+                <button onClick={() => blockDay(selectedDate!)} disabled={loading} className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 disabled:opacity-50">Bloquear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
