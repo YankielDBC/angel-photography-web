@@ -437,17 +437,28 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d)
       const dateKey = getDateKey(date)
+      
+      // Check if day is explicitly blocked by admin
       if (blockedDays.includes(dateKey)) {
         status[dateKey] = 'blocked'
+        continue
+      }
+      
+      // Check if day is fully booked (all slots either reserved or blocked)
+      const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
+      const dayBlockedSlots = blockedSlots[dateKey] || []
+      const totalOccupied = dayBookings.length + dayBlockedSlots.length
+      
+      if (totalOccupied >= TIME_SLOTS.length) {
+        status[dateKey] = 'full' // Full means no more availability
+      } else if (totalOccupied > 0) {
+        status[dateKey] = 'partial'
       } else {
-        const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
-        if (dayBookings.length === 0) status[dateKey] = 'free'
-        else if (dayBookings.length >= TIME_SLOTS.length) status[dateKey] = 'full'
-        else status[dateKey] = 'partial'
+        status[dateKey] = 'free'
       }
     }
     setDayStatus(status)
-  }, [bookings, currentMonth, daysInMonth, blockedDays])
+  }, [bookings, currentMonth, daysInMonth, blockedDays, blockedSlots])
 
   const getBookingsForDate = (date: Date) => bookings.filter(b => b.sessionDate === getDateKey(date))
   const days: (number | null)[] = []
