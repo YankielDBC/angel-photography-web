@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const adminPassword = 'AngelPro'
 
     // Debug log
-    console.log('Login attempt - user sent:', email, '| expected:', adminEmail, '| pass match:', password === adminPassword)
+    console.log('FULL DEBUG - body:', JSON.stringify(body), '| expected:', adminEmail, adminPassword)
 
     // Simple env-based auth for MVP
     if (email === adminEmail && password === adminPassword) {
