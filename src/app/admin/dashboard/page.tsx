@@ -305,6 +305,7 @@ function HomeView({ stats, bookings, formatDate, onSelectBooking }: {
             <div className="divide-y divide-[#f5f0e8]/5">
               {upcomingBookings.slice(0, 5).map(booking => {
                 const pending = booking.totalAmount - booking.depositPaid
+                const isCancelled = booking.status === 'cancelled'
                 return (
                   <button
                     key={booking.id}
@@ -312,14 +313,18 @@ function HomeView({ stats, bookings, formatDate, onSelectBooking }: {
                     className="w-full p-3 lg:p-4 flex items-center justify-between gap-3 hover:bg-[#f5f0e8]/5 transition-colors text-left"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{booking.client.name}</p>
-                      <p className="text-xs text-[#f5f0e8]/50">{booking.serviceType} - {booking.serviceTier}</p>
+                      <p className={`text-sm font-medium truncate ${isCancelled ? 'line-through text-[#f5f0e8]/50' : ''}`}>{booking.client.name}</p>
+                      <p className={`text-xs ${isCancelled ? 'text-[#f5f0e8]/30' : 'text-[#f5f0e8]/50'}`}>{booking.serviceType} - {booking.serviceTier}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs text-[#f5f0e8]/70">{formatDate(booking.sessionDate)} - {booking.sessionTime}</p>
+                      <p className={`text-xs ${isCancelled ? 'text-[#f5f0e8]/30' : 'text-[#f5f0e8]/70'}`}>{formatDate(booking.sessionDate)} - {booking.sessionTime}</p>
                       <div className="flex items-center justify-end gap-2 mt-1">
-                        <span className="text-xs text-[#eab308]">${pending}</span>
-                        <span className="text-xs text-[#22c55e]">+${booking.depositPaid}</span>
+                        <span className={`text-xs ${isCancelled ? 'text-[#ef4444]/50 line-through' : booking.status === 'confirmed' || booking.status === 'completed' ? 'text-[#60a5fa]' : 'text-[#eab308]'}`}>
+                          ${pending}
+                        </span>
+                        <span className={`text-xs ${isCancelled ? 'text-[#ef4444]/50 line-through' : 'text-[#22c55e]'}`}>
+                          +${booking.depositPaid}
+                        </span>
                       </div>
                     </div>
                   </button>
@@ -649,9 +654,13 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
                   <span>{formatDate(booking.sessionDate)}</span>
                   <span>{booking.sessionTime}</span>
                 </div>
-                <div className="flex gap-3">
-                  <span className="text-[#60a5fa]">${booking.totalAmount}</span>
-                  <span className="text-[#22c55e]">${booking.depositPaid}</span>
+                <div className="flex gap-2 items-center">
+                  <span className={`${booking.status === 'cancelled' ? 'line-through text-[#ef4444]/50' : booking.status === 'confirmed' || booking.status === 'completed' ? 'text-[#60a5fa]' : 'text-[#eab308]'}`}>
+                    ${booking.totalAmount - booking.depositPaid}
+                  </span>
+                  <span className={`${booking.status === 'cancelled' ? 'text-[#ef4444]/50 line-through' : 'text-[#22c55e]'}`}>
+                    +${booking.depositPaid}
+                  </span>
                 </div>
               </div>
               <p className="text-xs text-[#c8a46e]/70 mt-2">{booking.serviceType} - {booking.serviceTier}</p>
