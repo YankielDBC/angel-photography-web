@@ -61,7 +61,7 @@ model CalendarSlot {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  @@unique([date, time])
+  @@unique([date, time], name: "date_time")
 }
 
 // Días bloqueados por admin (todo el día)

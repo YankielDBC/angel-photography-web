@@ -575,6 +575,76 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [dayStatus, setDayStatus] = useState<Record<string, 'free' | 'partial' | 'full' | 'blocked'>>({})
   const [viewOnlyModal, setViewOnlyModal] = useState<Booking | null>(null)
+  const [blockedSlots, setBlockedSlots] = useState<Record<string, string[]>>({}) // date -> [times]
+  const [loading, setLoading] = useState(false)
+
+  // Cargar slots bloqueados al inicio
+  useEffect(() => {
+    fetchBlockedSlots()
+  }, [])
+
+  const fetchBlockedSlots = async () => {
+    try {
+      const res = await fetch('/api/blocked-slots', {
+        headers: { 'Authorization': 'Bearer admin-token' }
+      })
+      const slots = await res.json()
+      const grouped: Record<string, string[]> = {}
+      slots.forEach((s: any) => {
+        const dateKey = new Date(s.date).toISOString().split('T')[0]
+        if (!grouped[dateKey]) grouped[dateKey] = []
+        grouped[dateKey].push(s.time)
+      })
+      setBlockedSlots(grouped)
+    } catch (e) {
+      console.log('Demo mode - no blocked slots')
+    }
+  }
+
+  const blockSlot = async (date: Date, time: string) => {
+    setLoading(true)
+    const dateKey = getDateKey(date)
+    try {
+      await fetch('/api/blocked-slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer admin-token' },
+        body: JSON.stringify({ date: dateKey, time, reason: 'Bloqueado por admin' })
+      })
+      setBlockedSlots(prev => ({
+        ...prev,
+        [dateKey]: [...(prev[dateKey] || []), time]
+      }))
+    } catch (e) {
+      // Demo mode
+      setBlockedSlots(prev => ({
+        ...prev,
+        [dateKey]: [...(prev[dateKey] || []), time]
+      }))
+    }
+    setLoading(false)
+  }
+
+  const unblockSlot = async (date: Date, time: string) => {
+    setLoading(true)
+    const dateKey = getDateKey(date)
+    try {
+      await fetch(`/api/blocked-slots?date=${dateKey}&time=${time}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer admin-token' }
+      })
+      setBlockedSlots(prev => ({
+        ...prev,
+        [dateKey]: (prev[dateKey] || []).filter(t => t !== time)
+      }))
+    } catch (e) {
+      // Demo mode
+      setBlockedSlots(prev => ({
+        ...prev,
+        [dateKey]: (prev[dateKey] || []).filter(t => t !== time)
+      }))
+    }
+    setLoading(false)
+  }
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
@@ -640,6 +710,10 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
   const selectedDateKey = selectedDate ? getDateKey(selectedDate) : null
   const selectedDayStatus = selectedDateKey ? dayStatus[selectedDateKey] : null
   const selectedDayBookings = selectedDate ? getBookingsForDate(selectedDate) : []
+  const selectedDayBlockedSlots = selectedDate ? (blockedSlots[selectedDateKey!] || []) : []
+
+  // Función para verificar si un slot está bloqueado
+  const isSlotBlocked = (time: string) => selectedDayBlockedSlots.includes(time)
 
   return (
     <div className="space-y-4">
@@ -730,18 +804,36 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
           <div className="space-y-2">
             {TIME_SLOTS.map(time => {
               const bookingAtTime = selectedDayBookings.find(b => b.sessionTime === time && b.status !== 'cancelled')
-              const isAvailable = !bookingAtTime
+              const isBlocked = isSlotBlocked(time)
+              const isAvailable = !bookingAtTime && !isBlocked
               
               return (
                 <div 
                   key={time} 
                   className={`flex items-center justify-between text-sm p-2 rounded ${
-                    isAvailable ? 'bg-[#f5f0e8]/5' : 'bg-[#f5f0e8]/10'
+                    isBlocked ? 'bg-[#7f1d1d]/20' : isAvailable ? 'bg-[#f5f0e8]/5' : 'bg-[#f5f0e8]/10'
                   }`}
                 >
                   <span className="text-[#f5f0e8]/60">{time}</span>
-                  {isAvailable ? (
-                    <span className="text-[#22c55e]">Disponible</span>
+                  {isBlocked ? (
+                    <button
+                      onClick={() => !loading && unblockSlot(selectedDate!, time)}
+                      disabled={loading}
+                      className="text-xs px-2 py-1 rounded bg-[#22c55e]/20 text-[#22c55e] hover:bg-[#22c55e]/30 disabled:opacity-50"
+                    >
+                      Desbloquear
+                    </button>
+                  ) : isAvailable ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#22c55e]">Disponible</span>
+                      <button
+                        onClick={() => !loading && blockSlot(selectedDate!, time)}
+                        disabled={loading}
+                        className="text-xs px-2 py-1 rounded bg-[#ef4444]/20 text-[#ef4444] hover:bg-[#ef4444]/30 disabled:opacity-50"
+                      >
+                        Bloquear
+                      </button>
+                    </div>
                   ) : (
                     <button
                       onClick={() => setViewOnlyModal(bookingAtTime)}
