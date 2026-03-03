@@ -322,7 +322,7 @@ function HomeView({ stats, bookings, formatDate, onSelectBooking }: {
                         <span className={`text-xs ${isCancelled ? 'text-[#ef4444]/50 line-through' : booking.status === 'confirmed' || booking.status === 'completed' ? 'text-[#60a5fa]' : 'text-[#eab308]'}`}>
                           ${pending}
                         </span>
-                        <span className={`text-xs ${isCancelled ? 'text-[#ef4444]/50 line-through' : 'text-[#22c55e]'}`}>
+                        <span className="text-xs text-[#22c55e]">
                           +${booking.depositPaid}
                         </span>
                       </div>
@@ -658,7 +658,7 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
                   <span className={`${booking.status === 'cancelled' ? 'line-through text-[#ef4444]/50' : booking.status === 'confirmed' || booking.status === 'completed' ? 'text-[#60a5fa]' : 'text-[#eab308]'}`}>
                     ${booking.totalAmount - booking.depositPaid}
                   </span>
-                  <span className={`${booking.status === 'cancelled' ? 'text-[#ef4444]/50 line-through' : 'text-[#22c55e]'}`}>
+                  <span className="text-[#22c55e]">
                     +${booking.depositPaid}
                   </span>
                 </div>
