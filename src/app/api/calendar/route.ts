@@ -79,12 +79,13 @@ export async function GET(request: Request) {
       const blockedTimes = dateBlockedSlots.map(b => b.time)
       
       // Calcular estado de cada horario
-      const slots = TIME_SLOTS.map(time => {
+      const slotsMap = TIME_SLOTS.map(time => {
         const isBooked = bookedTimes.includes(time)
         const isBlocked = blockedTimes.includes(time)
         
         if (isBooked) {
           const booking = dateBookings.find(b => b.sessionTime === time)
+          if (!booking) return null
           return {
             time,
             status: 'booked',
@@ -109,6 +110,8 @@ export async function GET(request: Request) {
         
         return { time, status: 'available' }
       })
+      
+      const slots = slotsMap.filter((s): s is { time: string; status: string; booking?: any; reason?: string } => s !== null)
       
       const availableSlots = slots.filter(s => s.status === 'available').length
       const bookedSlots = slots.filter(s => s.status === 'booked').length
