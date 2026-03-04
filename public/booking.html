@@ -915,12 +915,12 @@
                 const res = await fetch(`/api/calendar?month=${monthStr}`);
                 const data = await res.json();
                 calendarData = data.availability || {};
-                renderCalendar();
+                renderCalendar(); // Render after data loads
                 renderTimeSlots();
             } catch (error) {
                 console.error('Error loading calendar:', error);
                 calendarData = {};
-                renderCalendar();
+                renderCalendar(); // Still render even on error
             }
         }
 
@@ -1227,8 +1227,8 @@
             window.scrollTo(0, 0);
         });
 
-        // Initialize
-        renderCalendar();
+        // Initialize - load calendar data first
+        loadCalendarData();
         
         // Load packages from API - single source of truth
         fetch('/api/packages')
