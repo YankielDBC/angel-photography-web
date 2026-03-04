@@ -26,7 +26,7 @@ function SuccessContent() {
 
   useEffect(() => {
     if (bookingId) {
-      fetch(`/api/bookings`)
+      fetch('/api/bookings')
         .then(res => res.json())
         .then(data => {
           const found = data.find((b: BookingData) => b.id === bookingId)
@@ -135,9 +135,17 @@ function SuccessContent() {
   )
 }
 
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}>
+      <p style={{ color: '#c9a962' }}>Cargando...</p>
+    </div>
+  )
+}
+
 export default function SuccessPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}><p style={{ color: '#c9a962' }}>Cargando...</p></Suspense>}>
+    <Suspense fallback={<LoadingFallback />}>
       <SuccessContent />
     </Suspense>
   )
