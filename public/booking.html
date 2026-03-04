@@ -971,7 +971,7 @@
                 }
                 
                 // Selected
-                if (selectedDate && dateObj.getTime() === selectedDate.getTime()) {
+                if (selectedDate && selectedDate === dateStr) {
                     el.classList.add('selected');
                 }
                 
@@ -1110,10 +1110,13 @@
             const packageName = packageTypeOption.text + ' - ' + packageTierOption.text;
             const packagePrice = packageTierSelect.value ? packageTierSelect.options[packageTierSelect.selectedIndex].dataset.price : '0';
             
-            document.getElementById('summary-date').textContent = selectedDate.toLocaleDateString('es-ES', { 
+            // selectedDate is now a string "YYYY-MM-DD"
+            const displayDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-ES', { 
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-            });
-            document.getElementById('summary-time').textContent = selectedTime;
+            }) : '-';
+            
+            document.getElementById('summary-date').textContent = displayDate;
+            document.getElementById('summary-time').textContent = selectedTime || '-';
             document.getElementById('summary-package').textContent = packageName;
             document.getElementById('summary-total').textContent = '$' + packagePrice;
             document.getElementById('summary-restante').textContent = '$' + (parseInt(packagePrice) - 100);
@@ -1150,7 +1153,7 @@
                     clientPhone: document.getElementById('phone-input').value.trim(),
                     serviceType: document.getElementById('packageType').value,
                     serviceTier: document.getElementById('packageTier').value,
-                    sessionDate: selectedDate.toISOString().split('T')[0],
+                    sessionDate: selectedDate, // Already in YYYY-MM-DD format
                     sessionTime: selectedTime,
                     totalAmount: parseInt(packagePrice)
                 };

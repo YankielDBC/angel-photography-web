@@ -483,40 +483,38 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
         </div>
       )}
 
-      {/* Block Modal */}
-      {showBlockModal && (
+      {/* Block Modal - Simplified */}
+      {showBlockModal && selectedDate && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowBlockModal(false)}>
           <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-xl" onClick={e => e.stopPropagation()}>
-            <div className="bg-gray-50 p-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-700">Bloquear</h3>
+            <div className="bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-700">Bloquear {selectedDate}</h3>
+              <button onClick={() => setShowBlockModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="flex gap-2">
-                <button onClick={() => setBlockType('day')} className={`flex-1 py-2 rounded-lg text-sm font-medium ${blockType === 'day' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                  Día completo
-                </button>
-                <button onClick={() => setBlockType('slot')} className={`flex-1 py-2 rounded-lg text-sm font-medium ${blockType === 'slot' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                  Un horario
-                </button>
-              </div>
-              
-              {blockType === 'slot' && (
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Seleccionar horario</label>
-                  <select value={blockTime} onChange={e => setBlockTime(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    <option value="">Seleccionar...</option>
-                    {['9:30', '11:30', '14:00', '16:00', '18:00'].map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              
-              <div className="flex gap-2 pt-2">
-                <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600">Cancelar</button>
-                <button onClick={blockType === 'day' ? handleBlockDay : handleBlockSlot} className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600">
-                  Bloquear
-                </button>
+            <div className="p-4 space-y-3">
+              <button onClick={handleBlockDay} className="w-full py-3 rounded-lg font-medium bg-gray-600 text-white hover:bg-gray-700">
+                🔒 Bloquear día completo
+              </button>
+              <div className="text-center text-xs text-gray-400">o bloquea horarios específicos:</div>
+              <div className="grid grid-cols-2 gap-2">
+                {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
+                  const slot = selectedDayData?.slots?.find((s: any) => s.time === time)
+                  const isBooked = slot?.status === 'booked'
+                  const isBlocked = slot?.status === 'blocked'
+                  if (isBooked || isBlocked) return null
+                  return (
+                    <button key={time} onClick={async () => {
+                      await fetch('/api/calendar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: 'slot', date: selectedDate, time })
+                      })
+                      loadCalendar()
+                    }} className="py-2 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm">
+                      🕐 {time}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
