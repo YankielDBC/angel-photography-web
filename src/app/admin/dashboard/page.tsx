@@ -403,7 +403,8 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
               const isBlocked = slot?.status === 'blocked'
               const booking = selectedDayBookings.find((x: any) => x.sessionTime === time)
               const status = booking?.status || 'pending'
-              const statusLabel = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }[status] || '🟡'
+              const statusMap: Record<string, string> = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }
+              const statusLabel = statusMap[status] || '🟡'
               
               return (
                 <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : isBlocked ? 'bg-gray-100' : 'bg-green-50'}`}>
