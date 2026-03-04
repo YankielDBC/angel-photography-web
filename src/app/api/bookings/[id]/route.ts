@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient, GetCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb'
+
+const client = new DynamoDBClient({ 
+  region: process.env.AWS_REGION || 'us-east-1',
+})
+
+const docClient = DynamoDBDocumentClient.from(client)
+const TABLE_NAME = 'angel-bookings'
 
 export async function GET(
   request: Request,
@@ -7,15 +15,16 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const booking = await prisma.booking.findUnique({
-      where: { id }
-    })
+    const result = await docClient.send(new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { id }
+    }))
     
-    if (!booking) {
+    if (!result.Item) {
       return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
     }
     
-    return NextResponse.json(booking)
+    return NextResponse.json(result.Item)
   } catch (error) {
     return NextResponse.json({ error: 'Error al obtener reserva' }, { status: 500 })
   }
@@ -28,7 +37,7 @@ export async function PATCH(
   try {
     const { id } = await params
     const body = await request.json()
-    const { status, paymentMethod } = body
+    const { status, paymentMethod, sessionCost, remainingPaid, notes } = body
 
     const validStatuses = ['pending', 'confirmed', 'completed', 'no_show', 'cancelled']
     if (status && !validStatuses.includes(status)) {
@@ -40,16 +49,47 @@ export async function PATCH(
       return NextResponse.json({ error: 'Metodo de pago invalido' }, { status: 400 })
     }
 
-    const updateData: any = {}
-    if (status) updateData.status = status
-    if (paymentMethod) updateData.paymentMethod = paymentMethod
+    // Build update expression
+    const updateParts: string[] = []
+    const expressionValues: Record<string, any> = {}
+    const expressionNames: Record<string, string> = {}
 
-    const booking = await prisma.booking.update({
-      where: { id },
-      data: updateData
-    })
+    if (status) {
+      updateParts.push('#status = :status')
+      expressionValues[':status'] = status
+      expressionNames['#status'] = 'status'
+    }
+    if (paymentMethod) {
+      updateParts.push('paymentMethod = :paymentMethod')
+      expressionValues[':paymentMethod'] = paymentMethod
+    }
+    if (sessionCost !== undefined) {
+      updateParts.push('sessionCost = :sessionCost')
+      expressionValues[':sessionCost'] = sessionCost
+    }
+    if (remainingPaid !== undefined) {
+      updateParts.push('remainingPaid = :remainingPaid')
+      expressionValues[':remainingPaid'] = remainingPaid
+    }
+    if (notes !== undefined) {
+      updateParts.push('notes = :notes')
+      expressionValues[':notes'] = notes
+    }
 
-    return NextResponse.json(booking)
+    if (updateParts.length === 0) {
+      return NextResponse.json({ error: 'No hay datos para actualizar' }, { status: 400 })
+    }
+
+    const result = await docClient.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { id },
+      UpdateExpression: 'SET ' + updateParts.join(', '),
+      ExpressionAttributeValues: expressionValues,
+      ExpressionAttributeNames: Object.keys(expressionNames).length > 0 ? expressionNames : undefined,
+      ReturnValues: 'ALL_NEW'
+    }))
+
+    return NextResponse.json(result.Attributes || {})
   } catch (error) {
     console.error('Update booking error:', error)
     return NextResponse.json({ error: 'Error al actualizar reserva' }, { status: 500 })
@@ -62,9 +102,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    await prisma.booking.delete({
-      where: { id }
-    })
+    await docClient.send(new DeleteCommand({
+      TableName: TABLE_NAME,
+      Key: { id }
+    }))
 
     return NextResponse.json({ success: true })
   } catch (error) {
