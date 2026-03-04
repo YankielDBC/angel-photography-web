@@ -298,9 +298,6 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [calendarData, setCalendarData] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(true)
-  const [showBlockModal, setShowBlockModal] = useState(false)
-  const [blockType, setBlockType] = useState<'day' | 'slot'>('day')
-  const [blockTime, setBlockTime] = useState('')
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
@@ -314,32 +311,22 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
     try {
       const res = await fetch(`/api/calendar?month=${getMonthStr()}`)
       const data = await res.json()
-      if (data.availability) {
-        setCalendarData(data.availability)
-      }
-    } catch (error) {
-      console.error('Error loading calendar:', error)
-    }
+      if (data.availability) setCalendarData(data.availability)
+    } catch (error) { console.error('Error loading calendar:', error) }
     setLoading(false)
   }
 
-  useEffect(() => {
-    loadCalendar()
-  }, [currentMonth])
+  useEffect(() => { loadCalendar() }, [currentMonth])
 
   const getDateKey = (day: number) => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
   const isPastDate = (day: number) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date(); today.setHours(0, 0, 0, 0)
     return date < today
   }
 
-  const getDayStatus = (day: number) => {
-    const dateKey = getDateKey(day)
-    return calendarData[dateKey]?.status || 'available'
-  }
+  const getDayStatus = (day: number) => calendarData[getDateKey(day)]?.status || 'available'
 
   const days: (number | null)[] = []
   for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
@@ -347,69 +334,38 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
 
   const selectedDayData = selectedDate ? calendarData[selectedDate] : null
   const selectedDayBookings = selectedDayData?.bookings || []
+  const hasDayBookings = selectedDayData?.bookings?.length > 0
 
   const handleBlockDay = async () => {
+    if (!selectedDate || hasDayBookings) return
+    await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'day', date: selectedDate }) })
+    loadCalendar()
+  }
+
+  const handleBlockSlot = async (time: string) => {
     if (!selectedDate) return
-    try {
-      await fetch('/api/calendar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'day', date: selectedDate })
-      })
-      setShowBlockModal(false)
-      loadCalendar()
-    } catch (error) {
-      console.error('Error blocking day:', error)
-    }
+    await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'slot', date: selectedDate, time }) })
+    loadCalendar()
   }
 
-  const handleBlockSlot = async () => {
-    if (!selectedDate || !blockTime) return
-    try {
-      await fetch('/api/calendar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'slot', date: selectedDate, time: blockTime })
-      })
-      setShowBlockModal(false)
-      setBlockTime('')
-      loadCalendar()
-    } catch (error) {
-      console.error('Error blocking slot:', error)
-    }
-  }
-
-  const colors: Record<string, string> = {
-    available: 'bg-green-500',
-    partial: 'bg-green-400',
-    has_bookings: 'bg-amber-400',
-    full: 'bg-red-500',
-    blocked: 'bg-gray-400',
-    past: 'bg-gray-100 text-gray-300'
-  }
+  const colors: Record<string, string> = { available: 'bg-green-500', partial: 'bg-green-400', has_bookings: 'bg-amber-400', full: 'bg-red-500', blocked: 'bg-gray-400', past: 'bg-gray-100 text-gray-300' }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Calendario</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="p-2 hover:bg-amber-50 rounded-lg">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          </button>
+          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="p-2 hover:bg-amber-50 rounded-lg"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
           <span className="text-sm capitalize min-w-[120px] text-center">{monthName}</span>
-          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="p-2 hover:bg-amber-50 rounded-lg">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          </button>
+          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="p-2 hover:bg-amber-50 rounded-lg"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
         </div>
       </div>
-      
       <div className="flex gap-3 text-xs flex-wrap">
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500"></span> Disponible</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-400"></span> Con reservas</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500"></span> Lleno</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400"></span> Bloqueado</span>
       </div>
-      
       <div className="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 shadow-sm">
         <div className="grid grid-cols-7 gap-1">
           {weekDays.map(d => <div key={d} className="text-center text-xs text-gray-400 font-medium py-2">{d}</div>)}
@@ -419,109 +375,41 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
             const isToday = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString() === new Date().toDateString()
             const isSelected = selectedDate === getDateKey(day)
             const state = isPast ? 'past' : getDayStatus(day)
-            return (
-              <button key={day} onClick={() => !isPast && setSelectedDate(getDateKey(day))} 
-                className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-white' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} 
-                disabled={isPast}>
-                {day}
-              </button>
-            )
+            return <button key={day} onClick={() => !isPast && setSelectedDate(getDateKey(day))} className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-white' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} disabled={isPast}>{day}</button>
           })}
         </div>
       </div>
-      
       {selectedDate && (
         <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium">
-              {new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </h3>
-            <button onClick={() => setShowBlockModal(true)} className="text-xs text-gray-500 hover:text-gray-700">
-              + Bloquear
-            </button>
+            <h3 className="text-sm font-medium">{new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+            {!hasDayBookings && <button onClick={handleBlockDay} className="text-xs px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">🔒 Bloquear día</button>}
           </div>
-          
           <div className="space-y-2">
             {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
               const slot = selectedDayData?.slots?.find((s: any) => s.time === time)
               const isBooked = slot?.status === 'booked'
               const isBlocked = slot?.status === 'blocked'
-              
               return (
                 <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : isBlocked ? 'bg-gray-100' : 'bg-green-50'}`}>
-                  <span className="text-gray-600">{time}</span>
+                  <span className="text-gray-600 font-medium w-16">{time}</span>
                   {isBooked ? (
-                    <button onClick={() => {
-                      const booking = selectedDayBookings.find((b: any) => b.sessionTime === time)
-                      if (booking) {
-                        onSelectBooking({
-                          id: booking.id,
-                          client: { name: booking.clientName, email: '', phone: '' },
-                          serviceType: booking.serviceType,
-                          serviceTier: booking.serviceTier,
-                          sessionDate: selectedDate,
-                          sessionTime: time,
-                          totalAmount: booking.totalAmount,
-                          depositPaid: 100,
-                          remainingPaid: booking.totalAmount - 100,
-                          sessionCost: 0,
-                          status: booking.status
-                        })
-                      }
-                    }} className="text-amber-600 hover:underline">
-                      {slot?.booking?.clientName || 'Reservado'}
-                    </button>
+                    <button onClick={() => { const b = selectedDayBookings.find((x: any) => x.sessionTime === time); if (b) onSelectBooking({ id: b.id, client: { name: b.clientName, email: '', phone: '' }, serviceType: b.serviceType, serviceTier: b.serviceTier, sessionDate: selectedDate, sessionTime: time, totalAmount: b.totalAmount, depositPaid: 100, remainingPaid: b.totalAmount - 100, sessionCost: 0, status: b.status }) }} className="text-amber-600 hover:underline flex-1 text-left">{slot?.booking?.clientName || 'Reservado'}</button>
                   ) : isBlocked ? (
-                    <span className="text-gray-400">Bloqueado</span>
+                    <span className="text-gray-400 flex-1">Bloqueado</span>
                   ) : (
-                    <span className="text-green-600">Disponible</span>
+                    <button onClick={() => handleBlockSlot(time)} className="text-xs px-2 py-1 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 flex-1 text-left max-w-[100px]">🔒 Bloquear</button>
                   )}
                 </div>
               )
             })}
           </div>
-        </div>
-      )}
-
-      {/* Block Modal - Simplified */}
-      {showBlockModal && selectedDate && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowBlockModal(false)}>
-          <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-xl" onClick={e => e.stopPropagation()}>
-            <div className="bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-700">Bloquear {selectedDate}</h3>
-              <button onClick={() => setShowBlockModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
-            </div>
-            <div className="p-4 space-y-3">
-              <button onClick={handleBlockDay} className="w-full py-3 rounded-lg font-medium bg-gray-600 text-white hover:bg-gray-700">
-                🔒 Bloquear día completo
-              </button>
-              <div className="text-center text-xs text-gray-400">o bloquea horarios específicos:</div>
-              <div className="grid grid-cols-2 gap-2">
-                {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
-                  const slot = selectedDayData?.slots?.find((s: any) => s.time === time)
-                  const isBooked = slot?.status === 'booked'
-                  const isBlocked = slot?.status === 'blocked'
-                  if (isBooked || isBlocked) return null
-                  return (
-                    <button key={time} onClick={async () => {
-                      await fetch('/api/calendar', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ type: 'slot', date: selectedDate, time })
-                      })
-                      loadCalendar()
-                    }} className="py-2 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm">
-                      🕐 {time}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
+          {hasDayBookings && <p className="text-xs text-amber-500 mt-3 text-center">⚠️ No se puede bloquear el día porque hay reservas.</p>}
         </div>
       )}
     </div>
   )
+}
 }
 
 function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
