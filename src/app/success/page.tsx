@@ -4,6 +4,36 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState, Suspense } from 'react'
 
+// Animated checkmark SVG
+function SuccessIcon() {
+  return (
+    <div className="mb-6 flex justify-center">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="animate-scale">
+        <circle cx="40" cy="40" r="36" stroke="#22c55e" strokeWidth="4" fill="none" style={{ animation: 'pulse 2s ease-in-out infinite' }}/>
+        <circle cx="40" cy="40" r="28" fill="#22c55e" opacity="0.15"/>
+        <path 
+          d="M24 40L35 51L56 30" 
+          stroke="#22c55e" 
+          strokeWidth="5" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          fill="none" 
+          style={{ strokeDasharray: 60, strokeDashoffset: 60, animation: 'draw 0.6s ease-out 0.3s forwards' }}
+        />
+      </svg>
+      <style jsx>{`
+        @keyframes draw {
+          to { strokeDashoffset: 0; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 interface BookingData {
   id: string
   clientName: string
@@ -66,7 +96,8 @@ function SuccessContent() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#0a0a0a', color: '#fafafa' }}>
       <div className="text-center max-w-lg">
-        <span className="text-6xl mb-4 block">✅</span>
+        <SuccessIcon />
+        
         <h1 className="font-serif text-4xl font-bold mb-4" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
           ¡Reserva Confirmada!
         </h1>

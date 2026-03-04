@@ -776,9 +776,19 @@
 
     <!-- Success Overlay -->
     <div class="success-overlay" id="success-overlay">
-        <div class="success-icon">✓</div>
+        <div class="success-icon">
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" stroke="#22c55e" stroke-width="4" fill="none" style="animation: pulse-ring 2s ease-out infinite;"/>
+                <circle cx="50" cy="50" r="35" fill="#22c55e" opacity="0.1"/>
+                <path d="M30 50L42 62L70 34" stroke="#22c55e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" style="stroke-dasharray: 60; stroke-dashoffset: 60; animation: draw-check 0.5s ease-out 0.3s forwards;"/>
+            </svg>
+        </div>
         <h2 class="success-title">Reserva Confirmada</h2>
         <p class="success-text">Te hemos enviado un correo con los detalles. ¡Nos vemos en tu sesión!</p>
+        <style>
+            @keyframes draw-check { to { stroke-dashoffset: 0; } }
+            @keyframes pulse-ring { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } }
+        </style>
     </div>
 
     <!-- Three.js -->
