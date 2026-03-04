@@ -175,20 +175,36 @@ function KpiCard({ title, value, subtext, color }: { title: string; value: strin
 }
 
 function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
+  // Filter by status for correct calculations
+  const pendingBookings = bookings.filter(b => b.status === 'pending')
+  const confirmedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed')
+  
+  // Pending = sum of remainingPaid for pending bookings
+  const totalPending = pendingBookings.reduce((sum, b) => sum + (b.remainingPaid || 0), 0)
+  
+  // Total = sum of all bookings (regardless of status)
+  const totalRevenue = bookings.reduce((sum, b) => sum + b.totalAmount, 0)
+  
+  // Facturado = sum of confirmed bookings (totalAmount, not deposits)
+  const totalFacturado = confirmedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
+  
+  // Costs
+  const totalCosts = confirmedBookings.reduce((sum, b) => sum + (b.sessionCost || 0), 0)
+  
+  // 6% tax estimate on confirmed
+  const taxEstimate = Math.round(totalFacturado * 0.06)
+  
+  // Upcoming bookings (not cancelled, not completed)
   const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'completed').sort((a, b) => new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime())
-  const completed = bookings.filter(b => b.status === 'completed' || b.status === 'confirmed')
-  const totalRevenue = completed.reduce((sum, b) => sum + b.totalAmount, 0)
-  const totalCosts = completed.reduce((sum, b) => sum + (b.sessionCost || 0), 0)
-  const pending = completed.reduce((sum, b) => sum + (b.totalAmount - b.depositPaid), 0)
 
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Resumen</h2><span className="text-xs text-gray-400">{new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })}</span></div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
         <KpiCard title="Reservas" value={String(bookings.length)} subtext="totales" color="#b8964c" />
-        <KpiCard title="x Reserva" value={`$${completed.length ? Math.round(totalRevenue / completed.length) : 0}`} subtext="promedio" color="#3b82f6" />
-        <KpiCard title="Pendiente" value={`$${pending}`} subtext="por cobrar" color="#eab308" />
-        <KpiCard title="Beneficio" value={`$${totalRevenue - totalCosts}`} subtext="confirmadas" color="#22c55e" />
+        <KpiCard title="x Reserva" value={`$${confirmedBookings.length ? Math.round(totalRevenue / confirmedBookings.length) : 0}`} subtext="promedio" color="#3b82f6" />
+        <KpiCard title="Pendiente" value={`$${totalPending}`} subtext="por cobrar" color="#eab308" />
+        <KpiCard title="Beneficio" value={`$${totalFacturado - totalCosts - taxEstimate}`} subtext="confirmadas" color="#22c55e" />
       </div>
       <div><h3 className="text-sm font-medium text-amber-600 mb-3">Próximas Sesiones</h3>
         <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
