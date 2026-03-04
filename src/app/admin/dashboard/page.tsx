@@ -326,11 +326,7 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
     return date < today
   }
 
-  const getDayStatus = (day: number) => {
-    // Días pasados siempre gris
-    if (isPastDate(day)) return 'past'
-    return calendarData[getDateKey(day)]?.status || 'available'
-  }
+  const getDayStatus = (day: number) => calendarData[getDateKey(day)]?.status || 'available'
 
   const days: (number | null)[] = []
   for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
@@ -339,7 +335,6 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
   const selectedDayData = selectedDate ? calendarData[selectedDate] : null
   const selectedDayBookings = selectedDayData?.bookings || []
   const hasDayBookings = selectedDayData?.bookings?.length > 0
-  const isSelectedDayPast = selectedDate ? new Date(selectedDate) < new Date(new Date().toDateString()) : false
 
   const handleBlockDay = async () => {
     if (!selectedDate || hasDayBookings) return
@@ -353,14 +348,7 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
     loadCalendar()
   }
 
-  const handleUnblock = async (type: 'day' | 'slot', time?: string) => {
-    if (!selectedDate) return
-    const id = type === 'day' ? `day_${selectedDate}` : `slot_${selectedDate}_${time}`
-    await fetch(`/api/calendar?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-    loadCalendar()
-  }
-
-  const colors: Record<string, string> = { available: 'bg-green-500', partial: 'bg-green-400', has_bookings: 'bg-amber-400', full: 'bg-red-500', blocked: 'bg-gray-400', past: 'bg-gray-300' }
+  const colors: Record<string, string> = { available: 'bg-green-500', partial: 'bg-green-400', has_bookings: 'bg-amber-400', full: 'bg-red-500', blocked: 'bg-gray-400', past: 'bg-gray-100 text-gray-300' }
 
   return (
     <div className="space-y-4">
@@ -377,7 +365,6 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-400"></span> Con reservas</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500"></span> Lleno</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400"></span> Bloqueado</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-300"></span> Pasado</span>
       </div>
       <div className="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 shadow-sm">
         <div className="grid grid-cols-7 gap-1">
@@ -387,25 +374,16 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
             const isPast = isPastDate(day)
             const isToday = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString() === new Date().toDateString()
             const isSelected = selectedDate === getDateKey(day)
-            const state = getDayStatus(day)
-            return <button key={day} onClick={() => setSelectedDate(getDateKey(day))} className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-white' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} disabled={false}>{day}</button>
+            const state = isPast ? 'past' : getDayStatus(day)
+            return <button key={day} onClick={() => !isPast && setSelectedDate(getDateKey(day))} className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-white' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} disabled={isPast}>{day}</button>
           })}
         </div>
       </div>
       {selectedDate && (
         <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="text-sm font-medium">{new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-              {isSelectedDayPast && <span className="text-xs text-gray-400">📅 Día pasado</span>}
-            </div>
-            <div className="flex gap-2">
-              {selectedDayData?.status === 'blocked' ? (
-                <button onClick={() => handleUnblock('day')} className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">🔓 Desbloquear día</button>
-              ) : !hasDayBookings && !isSelectedDayPast ? (
-                <button onClick={handleBlockDay} className="text-xs px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">🔒 Bloquear día</button>
-              ) : null}
-            </div>
+            <h3 className="text-sm font-medium">{new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+            {!hasDayBookings && <button onClick={handleBlockDay} className="text-xs px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">🔒 Bloquear día</button>}
           </div>
           <div className="space-y-2">
             {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
@@ -416,25 +394,28 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
                 <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : isBlocked ? 'bg-gray-100' : 'bg-green-50'}`}>
                   <span className="text-gray-600 font-medium w-16">{time}</span>
                   {isBooked ? (
-                    <button onClick={() => { const b = selectedDayBookings.find((x: any) => x.sessionTime === time); if (b) onSelectBooking({ id: b.id, client: { name: b.clientName, email: '', phone: '' }, serviceType: b.serviceType, serviceTier: b.serviceTier, sessionDate: selectedDate, sessionTime: time, totalAmount: b.totalAmount, depositPaid: 100, remainingPaid: b.totalAmount - 100, sessionCost: 0, status: b.status }) }} className="text-amber-600 hover:underline flex-1 text-left">
-                      {slot?.booking?.clientName || 'Reservado'} <span className="text-xs text-gray-400">({b?.status || 'pending'})</span>
-                    </button>
+                    <button onClick={() => { const b = selectedDayBookings.find((x: any) => x.sessionTime === time); if (b) onSelectBooking({ id: b.id, client: { name: b.clientName, email: '', phone: '' }, serviceType: b.serviceType, serviceTier: b.serviceTier, sessionDate: selectedDate, sessionTime: time, totalAmount: b.totalAmount, depositPaid: 100, remainingPaid: b.totalAmount - 100, sessionCost: 0, status: b.status }) }} className="text-amber-600 hover:underline flex-1 text-left">{slot?.booking?.clientName || 'Reservado'}</button>
                   ) : isBlocked ? (
-                    <button onClick={() => handleUnblock('slot', time)} className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 flex-1 text-left max-w-[100px]">🔓 Desbloquear</button>
-                  ) : !isSelectedDayPast ? (
+                    <span className="text-gray-400 flex-1">Bloqueado</span>
+                  ) : (
                     <button onClick={() => handleBlockSlot(time)} className="text-xs px-2 py-1 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 flex-1 text-left max-w-[100px]">🔒 Bloquear</button>
-                  ) : <span className="text-gray-400 flex-1">-</span>}
+                  )}
                 </div>
               )
             })}
           </div>
-          {hasDayBookings && !isSelectedDayPast && <p className="text-xs text-amber-500 mt-3 text-center">⚠️ No se puede bloquear el día porque hay reservas.</p>}
-          {isSelectedDayPast && <p className="text-xs text-gray-400 mt-3 text-center">📅 Las reservas de días pasados muestran su estado real.</p>}
+          {hasDayBookings && <p className="text-xs text-amber-500 mt-3 text-center">⚠️ No se puede bloquear el día porque hay reservas.</p>}
         </div>
       )}
     </div>
   )
 }
+
+function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
+  const [filter, setFilter] = useState('all')
+  const [search, setSearch] = useState('')
+  const filteredBookings = bookings.filter(b => (filter === 'all' || b.status === filter) && (b.client.name.toLowerCase().includes(search.toLowerCase()) || b.serviceType.toLowerCase().includes(search.toLowerCase())))
+  const StatusBadge = ({ status }: { status: string }) => { const config: Record<string, { bg: string; text: string; label: string }> = { pending: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Pendiente' }, confirmed: { bg: 'bg-green-100', text: 'text-green-700', label: 'Confirmado' }, completed: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Completado' }, cancelled: { bg: 'bg-red-100', text: 'text-red-700', label: 'Cancelado' } }; const c = config[status] || config.pending; return <span className={`${c.bg} ${c.text} px-2 py-0.5 rounded-full text-xs font-medium`}>{c.label}</span> }
 
   return (
     <div className="space-y-4">
