@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 
 interface BookingData {
   id: string
@@ -18,7 +18,7 @@ interface BookingData {
   status: string
 }
 
-export default function SuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams()
   const bookingId = searchParams.get('booking_id')
   const [booking, setBooking] = useState<BookingData | null>(null)
@@ -26,7 +26,6 @@ export default function SuccessPage() {
 
   useEffect(() => {
     if (bookingId) {
-      // Intentar obtener datos de la reserva
       fetch(`/api/bookings`)
         .then(res => res.json())
         .then(data => {
@@ -133,5 +132,13 @@ export default function SuccessPage() {
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}><p style={{ color: '#c9a962' }}>Cargando...</p></Suspense>}>
+      <SuccessContent />
+    </Suspense>
   )
 }
