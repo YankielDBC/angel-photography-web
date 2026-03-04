@@ -97,18 +97,39 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('/api/reports?type=summary', { headers: { 'Authorization': 'Bearer admin-token' } })
-      const data = await res.json()
-      setBookings(data.upcomingBookings || [])
-    } catch {
-      setBookings([
-        { id: '1', client: { name: 'Maria Garcia', email: 'maria@email.com', phone: '+1 305-555-0101' }, serviceType: 'Maternity', serviceTier: 'Premium', sessionDate: '2026-03-05', sessionTime: '9:30', totalAmount: 250, depositPaid: 100, remainingPaid: 150, sessionCost: 50, status: 'confirmed' },
-        { id: '2', client: { name: 'Carlos Rodriguez', email: 'carlos@email.com', phone: '+1 305-555-0102' }, serviceType: 'Newborn', serviceTier: 'Basic', sessionDate: '2026-03-08', sessionTime: '14:00', totalAmount: 150, depositPaid: 100, remainingPaid: 50, sessionCost: 30, status: 'pending' },
-        { id: '3', client: { name: 'Ana Martinez', email: 'ana@email.com', phone: '+1 305-555-0103' }, serviceType: 'Family', serviceTier: 'Standard', sessionDate: '2026-02-10', sessionTime: '11:30', totalAmount: 200, depositPaid: 100, remainingPaid: 100, sessionCost: 40, status: 'completed' },
-        { id: '4', client: { name: 'Luis Perez', email: 'luis@email.com', phone: '+1 305-555-0104' }, serviceType: 'Kids', serviceTier: 'Premium', sessionDate: '2026-02-12', sessionTime: '16:00', totalAmount: 300, depositPaid: 100, remainingPaid: 200, sessionCost: 60, status: 'completed' },
-        { id: '5', client: { name: 'Sofia Lopez', email: 'sofia@email.com', phone: '+1 305-555-0105' }, serviceType: 'Wedding', serviceTier: 'Exclusive', sessionDate: '2026-01-15', sessionTime: '9:30', totalAmount: 500, depositPaid: 100, remainingPaid: 400, sessionCost: 100, status: 'completed' },
-      ])
-    } finally { setLoading(false) }
+      // Fetch from DynamoDB via API
+      const res = await fetch('/api/bookings')
+      if (res.ok) {
+        const items = await res.json()
+        // Normalize DynamoDB items to match expected format
+        const normalized = items.map((item: any) => ({
+          id: item.id,
+          client: {
+            name: item.clientName || '',
+            email: item.clientEmail || '',
+            phone: item.clientPhone || ''
+          },
+          serviceType: item.serviceType || '',
+          serviceTier: item.serviceTier || '',
+          sessionDate: item.sessionDate || '',
+          sessionTime: item.sessionTime || '',
+          totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
+          depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
+          remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
+          sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
+          status: item.status || 'pending',
+          notes: item.notes || ''
+        }))
+        setBookings(normalized)
+      } else {
+        setBookings([])
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error)
+      setBookings([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const updateBookingStatus = async (id: string, newStatus: string) => {
