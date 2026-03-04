@@ -53,13 +53,20 @@ export async function GET(request: Request) {
       const dateBookings = bookings.filter((b: any) => b.sessionDate === date)
       const dateBlockedSlots = blockedSlots.filter((b: any) => b.date === date)
       
-      const bookedTimes = dateBookings.map((b: any) => b.sessionTime)
+      // Normalizar horas a formato HH:mm sin ceros a la izquierda
+      const bookedTimes = dateBookings.map((b: any) => {
+        const [h, m] = b.sessionTime.split(':')
+        return `${parseInt(h)}:${m}`
+      })
       const blockedTimes = dateBlockedSlots.map((b: any) => b.time)
       
       // Calcular slots
       const slots = TIME_SLOTS.map(time => {
         if (bookedTimes.includes(time)) {
-          const booking = dateBookings.find((b: any) => b.sessionTime === time)
+          const booking = dateBookings.find((b: any) => {
+            const [h, m] = b.sessionTime.split(':')
+            return `${parseInt(h)}:${m}` === time
+          })
           return {
             time,
             status: 'booked',
