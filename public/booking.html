@@ -1287,28 +1287,6 @@ document.getElementById('packageType').addEventListener('change', function() {
   
   updatePrice();
 });
-  const tierWrapper = document.getElementById('tierWrapper');
-  const tierSelect = document.getElementById('packageTier');
-  const selectedType = this.value;
-  
-  if (selectedType) {
-    tierWrapper.style.display = 'block';
-    tierSelect.innerHTML = '<option value="">Selecciona un paquete...</option>';
-    
-    packageTiers[selectedType].forEach(tier => {
-      const option = document.createElement('option');
-      option.value = tier.v;
-      option.textContent = tier.t;
-      option.dataset.price = tier.p;
-      tierSelect.appendChild(option);
-    });
-  } else {
-    tierWrapper.style.display = 'none';
-    tierSelect.innerHTML = '<option value="">Selecciona un paquete...</option>';
-  }
-  
-  updatePrice();
-});
 
 document.getElementById('packageTier').addEventListener('change', updatePrice);
 </script>
