@@ -295,56 +295,233 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost }: { book
 
 function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [blockedDays, setBlockedDays] = useState<string[]>([])
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [calendarData, setCalendarData] = useState<Record<string, any>>({})
+  const [loading, setLoading] = useState(true)
+  const [showBlockModal, setShowBlockModal] = useState(false)
+  const [blockType, setBlockType] = useState<'day' | 'slot'>('day')
+  const [blockTime, setBlockTime] = useState('')
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
   const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
   const weekDays = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 
-  const getDateKey = (date: Date) => date.toISOString().split('T')[0]
-  const isPastDate = (date: Date) => { const today = new Date(); today.setHours(0, 0, 0, 0); return date < today }
+  const getMonthStr = () => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
+
+  const loadCalendar = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/calendar?month=${getMonthStr()}`)
+      const data = await res.json()
+      if (data.availability) {
+        setCalendarData(data.availability)
+      }
+    } catch (error) {
+      console.error('Error loading calendar:', error)
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadCalendar()
+  }, [currentMonth])
+
+  const getDateKey = (day: number) => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
+  const isPastDate = (day: number) => {
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date < today
+  }
 
   const getDayStatus = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-    const dateKey = getDateKey(date)
-    const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
-    if (blockedDays.includes(dateKey)) return 'blocked'
-    if (dayBookings.length === 0) return 'free'
-    if (dayBookings.length >= TIME_SLOTS.length) return 'full'
-    return 'partial'
+    const dateKey = getDateKey(day)
+    return calendarData[dateKey]?.status || 'available'
   }
 
   const days: (number | null)[] = []
   for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
 
-  const selectedDayBookings = selectedDate ? bookings.filter(b => b.sessionDate === getDateKey(selectedDate)) : []
+  const selectedDayData = selectedDate ? calendarData[selectedDate] : null
+  const selectedDayBookings = selectedDayData?.bookings || []
 
-  const colors: Record<string, string> = { free: 'bg-green-500', partial: 'bg-amber-400', full: 'bg-red-500', blocked: 'bg-gray-400', past: 'bg-gray-100 text-gray-300' }
+  const handleBlockDay = async () => {
+    if (!selectedDate) return
+    try {
+      await fetch('/api/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'day', date: selectedDate })
+      })
+      setShowBlockModal(false)
+      loadCalendar()
+    } catch (error) {
+      console.error('Error blocking day:', error)
+    }
+  }
+
+  const handleBlockSlot = async () => {
+    if (!selectedDate || !blockTime) return
+    try {
+      await fetch('/api/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'slot', date: selectedDate, time: blockTime })
+      })
+      setShowBlockModal(false)
+      setBlockTime('')
+      loadCalendar()
+    } catch (error) {
+      console.error('Error blocking slot:', error)
+    }
+  }
+
+  const colors: Record<string, string> = {
+    available: 'bg-green-500',
+    partial: 'bg-green-400',
+    has_bookings: 'bg-amber-400',
+    full: 'bg-red-500',
+    blocked: 'bg-gray-400',
+    past: 'bg-gray-100 text-gray-300'
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Calendario</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Calendario</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="p-2 hover:bg-amber-50 rounded-lg"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
+          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="p-2 hover:bg-amber-50 rounded-lg">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
           <span className="text-sm capitalize min-w-[120px] text-center">{monthName}</span>
-          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="p-2 hover:bg-amber-50 rounded-lg"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
+          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="p-2 hover:bg-amber-50 rounded-lg">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </button>
         </div>
       </div>
-      <div className="flex gap-3 text-xs flex-wrap"><span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500"></span> Libre</span><span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-400"></span> Parcial</span><span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500"></span> Lleno</span><span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400"></span> Bloqueado</span></div>
+      
+      <div className="flex gap-3 text-xs flex-wrap">
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500"></span> Disponible</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-400"></span> Con reservas</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500"></span> Lleno</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400"></span> Bloqueado</span>
+      </div>
+      
       <div className="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 shadow-sm">
-        <div className="grid grid-cols-7 gap-1">{weekDays.map(d => <div key={d} className="text-center text-xs text-gray-400 font-medium py-2">{d}</div>)}
-          {days.map((day, i) => { if (!day) return <div key={`empty-${i}`} className="aspect-square" />; const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day); const isPast = isPastDate(date); const isToday = date.toDateString() === new Date().toDateString(); const isSelected = selectedDate?.toDateString() === date.toDateString(); const state = getDayStatus(day); return <button key={day} onClick={() => !isPast && setSelectedDate(date)} className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-white' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} disabled={isPast}>{day}</button> })}
+        <div className="grid grid-cols-7 gap-1">
+          {weekDays.map(d => <div key={d} className="text-center text-xs text-gray-400 font-medium py-2">{d}</div>)}
+          {loading ? <div className="col-span-7 text-center py-8 text-gray-400">Cargando...</div> : days.map((day, i) => {
+            if (!day) return <div key={`empty-${i}`} className="aspect-square" />
+            const isPast = isPastDate(day)
+            const isToday = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString() === new Date().toDateString()
+            const isSelected = selectedDate === getDateKey(day)
+            const state = isPast ? 'past' : getDayStatus(day)
+            return (
+              <button key={day} onClick={() => !isPast && setSelectedDate(getDateKey(day))} 
+                className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-white' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} 
+                disabled={isPast}>
+                {day}
+              </button>
+            )
+          })}
         </div>
       </div>
-      {selectedDate && <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-        <h3 className="text-sm font-medium mb-3">{selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-        <div className="space-y-2">
-          {TIME_SLOTS.map(time => { const bookingAtTime = selectedDayBookings.find(b => b.sessionTime === time && b.status !== 'cancelled'); return <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${bookingAtTime ? 'bg-amber-50' : 'bg-green-50'}`}><span className="text-gray-600">{time}</span>{bookingAtTime ? <button onClick={() => onSelectBooking(bookingAtTime)} className="text-amber-600 hover:underline">{bookingAtTime.client.name}</button> : <span className="text-green-600">Disponible</span>}</div>})}
+      
+      {selectedDate && (
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium">
+              {new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </h3>
+            <button onClick={() => setShowBlockModal(true)} className="text-xs text-gray-500 hover:text-gray-700">
+              + Bloquear
+            </button>
+          </div>
+          
+          <div className="space-y-2">
+            {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
+              const slot = selectedDayData?.slots?.find((s: any) => s.time === time)
+              const isBooked = slot?.status === 'booked'
+              const isBlocked = slot?.status === 'blocked'
+              
+              return (
+                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : isBlocked ? 'bg-gray-100' : 'bg-green-50'}`}>
+                  <span className="text-gray-600">{time}</span>
+                  {isBooked ? (
+                    <button onClick={() => {
+                      const booking = selectedDayBookings.find((b: any) => b.sessionTime === time)
+                      if (booking) {
+                        onSelectBooking({
+                          id: booking.id,
+                          client: { name: booking.clientName, email: '', phone: '' },
+                          serviceType: booking.serviceType,
+                          serviceTier: booking.serviceTier,
+                          sessionDate: selectedDate,
+                          sessionTime: time,
+                          totalAmount: booking.totalAmount,
+                          depositPaid: 100,
+                          remainingPaid: booking.totalAmount - 100,
+                          sessionCost: 0,
+                          status: booking.status
+                        })
+                      }
+                    }} className="text-amber-600 hover:underline">
+                      {slot?.booking?.clientName || 'Reservado'}
+                    </button>
+                  ) : isBlocked ? (
+                    <span className="text-gray-400">Bloqueado</span>
+                  ) : (
+                    <span className="text-green-600">Disponible</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
-      </div>}
+      )}
+
+      {/* Block Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setShowBlockModal(false)}>
+          <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-gray-50 p-4 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-700">Bloquear</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="flex gap-2">
+                <button onClick={() => setBlockType('day')} className={`flex-1 py-2 rounded-lg text-sm font-medium ${blockType === 'day' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  Día completo
+                </button>
+                <button onClick={() => setBlockType('slot')} className={`flex-1 py-2 rounded-lg text-sm font-medium ${blockType === 'slot' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  Un horario
+                </button>
+              </div>
+              
+              {blockType === 'slot' && (
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Seleccionar horario</label>
+                  <select value={blockTime} onChange={e => setBlockTime(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Seleccionar...</option>
+                    {['9:30', '11:30', '14:00', '16:00', '18:00'].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setShowBlockModal(false)} className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600">Cancelar</button>
+                <button onClick={blockType === 'day' ? handleBlockDay : handleBlockSlot} className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600">
+                  Bloquear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
