@@ -89,16 +89,22 @@ export async function GET(request: Request) {
       
       // Estado del día
       let dayStatus: string
+      
+      // Gris: día bloqueado sin reservas
       if (blockedDays.includes(date)) {
-        dayStatus = 'blocked' // Gris
-      } else if (availableSlots === 0 && bookedSlots > 0) {
-        dayStatus = 'full' // Rojo
-      } else if (bookedSlots > 0 || blockedSlotsCount > 0) {
-        dayStatus = 'has_bookings' // Amarillo
-      } else if (availableSlots === TIME_SLOTS.length) {
-        dayStatus = 'available' // Verde
-      } else {
-        dayStatus = 'partial'
+        dayStatus = 'blocked'
+      } 
+      // Rojo: sin horarios disponibles (reservados + bloqueados = todos)
+      else if (availableSlots === 0) {
+        dayStatus = 'full'
+      }
+      // Amarillo: hay 1+ reservas
+      else if (bookedSlots > 0) {
+        dayStatus = 'has_bookings'
+      }
+      // Verde: hay al menos 1 horario disponible
+      else {
+        dayStatus = 'available'
       }
       
       availability[date] = {
