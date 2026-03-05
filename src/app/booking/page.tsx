@@ -163,13 +163,36 @@ export default function BookingPage() {
     };
 
     try {
+      // 1. Create booking in database
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bookingData)
       });
       const result = await res.json();
-      window.location.href = '/success?booking_id=' + result.id;
+      
+      if (!result.id) {
+        throw new Error('Failed to create booking');
+      }
+
+      // 2. Create Stripe checkout session
+      const checkoutRes = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          bookingId: result.id, 
+          amount: 100 // $100 deposit
+        })
+      });
+      const checkoutData = await checkoutRes.json();
+
+      // 3. Redirect to Stripe checkout
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url;
+      } else {
+        // Fallback if no checkout URL
+        window.location.href = '/success?booking_id=' + result.id;
+      }
     } catch (e) {
       console.error('Booking failed:', e);
       alert('Error al procesar la reserva. Intenta de nuevo.');
