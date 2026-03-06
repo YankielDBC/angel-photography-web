@@ -1,4 +1,7 @@
 {
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
   "rewrites": [
     { "source": "/booking", "destination": "/booking" },
     { "source": "/((?!api/|_next/).*)", "destination": "/index.html" }
