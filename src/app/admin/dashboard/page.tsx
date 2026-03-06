@@ -783,7 +783,7 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
           </div>
           <div className="space-y-2">
             {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
-              const booking = selectedDayBookings.find((b: any) => b.sessionTime === time)
+              const booking: any = selectedDayBookings.find((b: any) => b.sessionTime === time)
               const isBooked = !!booking
               const status = booking?.status || 'pending'
               const statusMap: Record<string, string> = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }
@@ -796,7 +796,7 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                     <button onClick={() => { 
                       if (booking) onSelectBooking({ 
                         id: booking.id, 
-                        client: { name: booking.clientName, email: booking.clientEmail || '', phone: booking.clientPhone || '' }, 
+                        client: { name: booking.client?.name || booking.clientName, email: booking.client?.email || booking.clientEmail || '', phone: booking.client?.phone || booking.clientPhone || '' }, 
                         serviceType: booking.serviceType, 
                         serviceTier: booking.serviceTier, 
                         sessionDate: selectedDate, 
@@ -804,7 +804,7 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                         totalAmount: booking.totalAmount || 0, 
                         depositPaid: booking.depositPaid || 100, 
                         remainingPaid: booking.remainingPaid || ((booking.totalAmount || 0) - 100), 
-                        sessionCost: 0, 
+                        sessionCost: booking.sessionCost || 0, 
                         status: booking.status,
                         // Campos adicionales
                         clientAge: booking.clientAge,
@@ -813,12 +813,12 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                         family4: booking.family4 || false,
                         hairMakeup: booking.hairMakeup || false,
                         outdoor: booking.outdoor || false,
-                        outdoorLocation: booking.outdoorLocation || null,
+                        outdoorLocation: booking.outdoorLocation || undefined,
                         additionalServicesCost: booking.additionalServicesCost || 0,
                         expenses: booking.expenses || []
                       }) 
                     }} className="text-amber-600 hover:underline flex-1 text-left">
-                      {booking.clientName || 'Reservado'} {statusLabel}
+                      {booking.client?.name || booking.clientName || 'Reservado'} {statusLabel}
                     </button>
                   ) : (
                     <span className="text-gray-400 text-xs">Disponible</span>
@@ -943,3 +943,4 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     </div>
   )
 }
+
