@@ -803,10 +803,11 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
               const status = booking?.status || 'pending'
               const statusMap: Record<string, string> = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }
               const statusLabel = statusMap[status] || '🟡'
+              const timeLabel = formatTime(time)
               
               return (
                 <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : 'bg-green-50'}`}>
-                  <span className="text-gray-600 font-medium w-16">{time}</span>
+                  <span className="text-gray-600 font-medium w-16">{timeLabel}</span>
                   {isBooked ? (
                     <button onClick={() => { 
                       if (booking) onSelectBooking({ 
