@@ -672,7 +672,7 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   )
 }
 
-function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void }) {
+function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void; refreshCalendar?: () => Promise<void> }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
