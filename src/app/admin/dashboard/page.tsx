@@ -702,11 +702,26 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
   const getDayStatus = (day: number) => {
     const dateKey = getDateKey(day)
     const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
-    if (dayBookings.length === 0) return 'available'
-    const hasPending = dayBookings.some(b => b.status === 'pending')
-    const hasConfirmed = dayBookings.some(b => b.status === 'confirmed' || b.status === 'completed')
-    if (hasConfirmed) return 'full'
-    if (hasPending) return 'has_bookings'
+    
+    // Obtener slots bloqueados del día
+    const dayData = calendarData[dateKey]
+    const blockedSlots = dayData?.slots?.filter((s: any) => s.status === 'blocked').length || 0
+    
+    // Total de horarios: 5 (9:30, 11:30, 14:00, 16:00, 18:00)
+    const totalSlots = 5
+    const bookedSlots = dayBookings.length
+    const occupiedSlots = bookedSlots + blockedSlots
+    
+    // Si hay días bloqueados sin reservas = gris
+    if (blockedSlots > 0 && bookedSlots === 0) return 'blocked'
+    
+    // Si todos los horarios están ocupados = rojo
+    if (occupiedSlots >= totalSlots) return 'full'
+    
+    // Si hay al menos 1 reserva = amarillo
+    if (bookedSlots > 0) return 'has_bookings'
+    
+    // Si hay horarios disponibles = verde
     return 'available'
   }
 
