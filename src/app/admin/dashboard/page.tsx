@@ -798,9 +798,10 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
           </div>
           <div className="space-y-2">
             {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
-              const booking: any = selectedDayBookings.find((b: any) => b.sessionTime === time)
-              const isBooked = !!booking
-              const status = booking?.status || 'pending'
+              // Buscar booking completo en el array de bookings
+              const fullBooking = bookings.find(b => b.sessionDate === selectedDate && b.sessionTime === time && b.status !== 'cancelled')
+              const isBooked = !!fullBooking
+              const status = fullBooking?.status || 'pending'
               const statusMap: Record<string, string> = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }
               const statusLabel = statusMap[status] || '🟡'
               const timeLabel = formatTime(time)
@@ -810,31 +811,9 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                   <span className="text-gray-600 font-medium w-16">{timeLabel}</span>
                   {isBooked ? (
                     <button onClick={() => { 
-                      if (booking) onSelectBooking({ 
-                        id: booking.id, 
-                        client: { name: booking.client?.name || booking.clientName, email: booking.client?.email || booking.clientEmail || '', phone: booking.client?.phone || booking.clientPhone || '' }, 
-                        serviceType: booking.serviceType, 
-                        serviceTier: booking.serviceTier, 
-                        sessionDate: selectedDate, 
-                        sessionTime: time, 
-                        totalAmount: booking.totalAmount || 0, 
-                        depositPaid: booking.depositPaid || 100, 
-                        remainingPaid: booking.remainingPaid || ((booking.totalAmount || 0) - 100), 
-                        sessionCost: booking.sessionCost || 0, 
-                        status: booking.status,
-                        // Campos adicionales
-                        clientAge: booking.clientAge,
-                        clientNotes: booking.clientNotes || '',
-                        family2: booking.family2 || false,
-                        family4: booking.family4 || false,
-                        hairMakeup: booking.hairMakeup || false,
-                        outdoor: booking.outdoor || false,
-                        outdoorLocation: booking.outdoorLocation || undefined,
-                        additionalServicesCost: booking.additionalServicesCost || 0,
-                        expenses: booking.expenses || []
-                      }) 
+                      if (fullBooking) onSelectBooking(fullBooking)
                     }} className="text-amber-600 hover:underline flex-1 text-left">
-                      {booking.client?.name || booking.clientName || 'Reservado'} {statusLabel}
+                      {fullBooking?.client?.name || 'Reservado'} {statusLabel}
                     </button>
                   ) : (
                     <span className="text-gray-400 text-xs">Disponible</span>
