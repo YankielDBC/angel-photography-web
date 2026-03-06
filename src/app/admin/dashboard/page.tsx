@@ -705,15 +705,25 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
     return date < today
   }
 
-  const getDayStatus = (day: number) => calendarData[getDateKey(day)]?.status || 'available'
+  const getDayStatus = (day: number) => {
+    const dateKey = getDateKey(day)
+    const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
+    if (dayBookings.length === 0) return 'available'
+    const hasPending = dayBookings.some(b => b.status === 'pending')
+    const hasConfirmed = dayBookings.some(b => b.status === 'confirmed' || b.status === 'completed')
+    if (hasConfirmed) return 'full'
+    if (hasPending) return 'has_bookings'
+    return 'available'
+  }
 
   const days: (number | null)[] = []
   for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
 
-  const selectedDayData = selectedDate ? calendarData[selectedDate] : null
-  const selectedDayBookings = selectedDayData?.bookings || []
-  const hasDayBookings = selectedDayData?.bookings?.length > 0
+  const selectedDayBookings = selectedDate 
+    ? bookings.filter(b => b.sessionDate === selectedDate && b.status !== 'cancelled')
+    : []
+  const hasDayBookings = selectedDayBookings.length > 0
 
   const handleBlockDay = async () => {
     if (!selectedDate || hasDayBookings) return
@@ -769,24 +779,18 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
         <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium">{new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-            {selectedDayData?.status === 'blocked' ? (
-              <button onClick={() => handleUnblock('day')} className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">🔓 Desbloquear día</button>
-            ) : !hasDayBookings ? (
-              <button onClick={handleBlockDay} className="text-xs px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">🔒 Bloquear día</button>
-            ) : null}
+            <span className="text-xs text-gray-500">{selectedDayBookings.length} reserva(s)</span>
           </div>
           <div className="space-y-2">
             {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
-              const slot = selectedDayData?.slots?.find((s: any) => s.time === time)
-              const isBooked = slot?.status === 'booked'
-              const isBlocked = slot?.status === 'blocked'
-              const booking = selectedDayBookings.find((x: any) => x.sessionTime === time)
+              const booking = selectedDayBookings.find((b: any) => b.sessionTime === time)
+              const isBooked = !!booking
               const status = booking?.status || 'pending'
               const statusMap: Record<string, string> = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }
               const statusLabel = statusMap[status] || '🟡'
               
               return (
-                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : isBlocked ? 'bg-gray-100' : 'bg-green-50'}`}>
+                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : 'bg-green-50'}`}>
                   <span className="text-gray-600 font-medium w-16">{time}</span>
                   {isBooked ? (
                     <button onClick={() => { 
@@ -814,12 +818,10 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                         expenses: booking.expenses || []
                       }) 
                     }} className="text-amber-600 hover:underline flex-1 text-left">
-                      {slot?.booking?.clientName || 'Reservado'} {statusLabel}
+                      {booking.clientName || 'Reservado'} {statusLabel}
                     </button>
-                  ) : isBlocked ? (
-                    <button onClick={() => handleUnblock('slot', time)} className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 flex-1 text-left max-w-[100px]">🔓 Desbloquear</button>
                   ) : (
-                    <button onClick={() => handleBlockSlot(time)} className="text-xs px-2 py-1 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 flex-1 text-left max-w-[100px]">🔒 Bloquear</button>
+                    <span className="text-gray-400 text-xs">Disponible</span>
                   )}
                 </div>
               )
