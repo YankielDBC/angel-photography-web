@@ -110,6 +110,21 @@ export async function POST(request: Request) {
       }
     }
     
+    // Verificar si ya existe reserva para ese horario (evitar double booking)
+    const existingCheck = await docClient.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      FilterExpression: 'sessionDate = :date AND sessionTime = :time AND status <> :cancelled',
+      ExpressionAttributeValues: {
+        ':date': body.sessionDate,
+        ':time': body.sessionTime,
+        ':cancelled': 'cancelled'
+      }
+    }))
+    
+    if (existingCheck.Items && existingCheck.Items.length > 0) {
+      return NextResponse.json({ error: 'Ya existe una reserva para este horario' }, { status: 409 })
+    }
+    
     // Generar ID único
     const id = 'bk_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5)
     
