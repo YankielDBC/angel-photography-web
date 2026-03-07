@@ -10,7 +10,7 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client)
 const TABLE_NAME = 'angel-bookings'
 
-// Colores de marca
+// Colores de marca - Rose Gold Theme
 const COLORS = {
   primary: [199, 124, 142],    // Rose gold
   secondary: [60, 60, 60],      // Dark gray
