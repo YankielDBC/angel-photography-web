@@ -317,13 +317,15 @@ export async function POST(request: Request) {
     }
 
     try {
+      // IMPORTANTE: No cambiamos el status a "confirmed" cuando se paga el depósito
+      // El cliente solo pagó $100, el resto sigue pendiente
+      // El admin decide manualmente cuándo marcar como "confirmed" (cuando paga TODO)
+      // Solo actualizamos el stripeSessionId para tracking
       await docClient.send(new UpdateCommand({
         TableName: TABLE_NAME,
         Key: { id: bookingId },
-        UpdateExpression: 'SET #status = :status, stripeSessionId = :stripeSessionId, paymentCompletedAt = :paymentCompletedAt',
-        ExpressionAttributeNames: { '#status': 'status' },
+        UpdateExpression: 'SET stripeSessionId = :stripeSessionId, paymentCompletedAt = :paymentCompletedAt',
         ExpressionAttributeValues: {
-          ':status': 'confirmed',
           ':stripeSessionId': session.id,
           ':paymentCompletedAt': new Date().toISOString()
         }

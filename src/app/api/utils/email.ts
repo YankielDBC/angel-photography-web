@@ -73,14 +73,14 @@ export async function sendBookingConfirmation(booking: {
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#c9a962 0%,#a88b4a 100%);padding:40px 40px 50px;text-align:center;">
       <div style="font-size:48px;margin-bottom:10px;">📸</div>
-      <h2 style="margin:0;color:#fff;font-size:28px;font-weight:500;">¡Reserva Confirmada!</h2>
+      <h2 style="margin:0;color:#fff;font-size:28px;font-weight:500;">¡Depósito Recibido!</h2>
       <p style="margin:10px 0 0;color:rgba(255,255,255,0.9);font-size:16px;">Tu sesión de fotos está programada</p>
     </div>
     
     <!-- Content -->
     <div style="padding:40px;">
       <p style="margin:0 0 20px;color:#fff;font-size:18px;">Hola <strong>${booking.clientName}</strong>,</p>
-      <p style="margin:0 0 30px;color:#aaa;font-size:16px;">Tu reserva ha sido confirmada. Nos vemos en tu sesión de fotos.</p>
+      <p style="margin:0 0 30px;color:#aaa;font-size:16px;">Tu reserva está confirmada. Nos vemos en tu sesión de fotos. El depósito de $100 ha sido recibido. El resto ($ ${booking.remainingPaid}) se paga el día de la sesión.</p>
       
       <!-- Details Card -->
       <div style="background:#252525;border-radius:16px;padding:24px;margin-bottom:30px;">
@@ -153,7 +153,7 @@ export async function sendBookingConfirmation(booking: {
   const mailOptions = {
     from: `"Angel Photography Miami" <${GMAIL_USER}>`,
     to: booking.clientEmail,
-    subject: `📸 Reserva Confirmada - ${formatDate(booking.sessionDate)}`,
+    subject: `📸 Depósito Recibido - Reserva para ${formatDate(booking.sessionDate)}`,
     html,
   };
 
