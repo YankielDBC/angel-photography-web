@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
 import jsPDF from 'jspdf'
+import fs from 'fs'
+import path from 'path'
 
 const client = new DynamoDBClient({ 
   region: process.env.AWS_REGION || 'us-east-1',
@@ -20,6 +22,17 @@ const accent = [251, 191, 36]     // amber-400
 const light = [255, 251, 245]      // amber-50 bg
 const text = [50, 50, 50]          // Near black
 const muted = [128, 128, 128]       // Gray
+
+// Cargar logo para PDF
+const getLogoBase64 = () => {
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'logo-invoice.png')
+    const logoBuffer = fs.readFileSync(logoPath)
+    return logoBuffer.toString('base64')
+  } catch {
+    return null
+  }
+}
 
 // GET - Generar factura PDF por ID de reserva
 export async function GET(request: Request) {
@@ -48,20 +61,29 @@ export async function GET(request: Request) {
     const pageWidth = doc.internal.pageSize.getWidth()
     
     // ===== HEADER CON COLOR =====
-    // Barra superior rose gold
+    // Barra superior amber
     doc.setFillColor(primary[0], primary[1], primary[2])
     doc.rect(0, 0, pageWidth, 35, 'F')
     
-    // Título
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(24)
-    doc.setFont('helvetica', 'bold')
-    doc.text('FACTURA', pageWidth / 2, 22, { align: 'center' })
-    
-    // Subtítulo
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'normal')
-    doc.text('Angel Photography Miami', pageWidth / 2, 30, { align: 'center' })
+    // Logo en el centro
+    const logoBase64 = getLogoBase64()
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, 'PNG', pageWidth / 2 - 20, 5, 40, 25)
+      } catch (e) {
+        // Si falla el logo, mostrar texto
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(20)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Angel Photography', pageWidth / 2, 22, { align: 'center' })
+      }
+    } else {
+      // Título fallback
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(24)
+      doc.setFont('helvetica', 'bold')
+      doc.text('FACTURA', pageWidth / 2, 22, { align: 'center' })
+    }
     
     // ===== INFORMACIÓN DE LA EMPRESA (izquierda) =====
     doc.setTextColor(text[0], text[1], text[2])
