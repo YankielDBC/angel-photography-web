@@ -188,6 +188,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, id, booking })
   } catch (error) {
     console.error('Error creating booking:', error)
-    return NextResponse.json({ error: 'Error al crear reserva' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('Error details:', errorMessage)
+    return NextResponse.json({ error: 'Error al crear reserva', details: errorMessage }, { status: 500 })
   }
 }
