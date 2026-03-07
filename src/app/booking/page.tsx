@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function BookingPage() {
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [calendarData, setCalendarData] = useState<Record<string, any>>({});
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
