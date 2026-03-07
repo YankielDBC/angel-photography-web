@@ -104,6 +104,22 @@ export async function GET(request: Request) {
       })
     })
     
+    // Si no hay expenses en bookings, usar ejemplo (remover cuando haya datos reales)
+    if (expenseDetails.length === 0) {
+      // Expenses hardcoded para demo - remover cuando Yankiel agregue expenses
+      const demoExpenses = [
+        { category: 'Alquiler', description: 'Estudio mensual', amount: 500 },
+        { category: 'Equipo', description: 'Mantenimiento cámaras', amount: 150 },
+        { category: 'Transporte', description: 'Gas / estacionamiento', amount: 75 },
+        { category: 'Marketing', description: 'Ads Facebook/Instagram', amount: 200 },
+        { category: 'Otros', description: 'Materiales varios', amount: 50 }
+      ]
+      demoExpenses.forEach(exp => {
+        totalExpenses += exp.amount
+        expenseDetails.push(exp)
+      })
+    }
+    
     // Calcular NETO
     const netIncome = totalIncome - totalExpenses
     
