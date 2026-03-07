@@ -1008,7 +1008,7 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     })
     // En reportes: completed cuentan como ingreso completo (confirmed = TODO pagado)
     // NO incluir cancelled porque solo tuvo el depósito, no es ingreso completo
-    const completed = monthBookings.filter(b => b.status === 'completed' || b.status === 'confirmed')
+    const completed = monthBookings.filter(b => (b.status === 'completed' || b.status === 'confirmed'))
     // Calcular gastos totales del mes (sessionCost + expenses)
     const totalExpenses = completed.reduce((sum, b) => {
       const sessionCost = b.sessionCost || 0
