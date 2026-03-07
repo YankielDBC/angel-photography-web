@@ -21,8 +21,8 @@ const light = [250, 250, 250]     // light gray
 const text = [26, 26, 26]         // near black
 const muted = [100, 100, 100]     // gray
 
-// Logo URL pública
-const LOGO_URL = 'https://gateway.pinata.cloud/ipfs/bafkreidjqv5own6ssb2k6rzzarllb7wzpdv4y6wgqmmtubsfgzvvaaedju'
+// Logo URL pública (GitHub raw)
+const LOGO_URL = 'https://raw.githubusercontent.com/YankielDBC/angel-photography-web/master/public/logo-invoice.png'
 
 // GET - Generar factura PDF por ID de reserva
 export async function GET(request: Request) {
