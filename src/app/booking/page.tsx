@@ -212,8 +212,12 @@ export default function BookingPage() {
       });
       const result = await res.json();
       
+      if (!res.ok) {
+        throw new Error(result.error || 'Error al crear reserva');
+      }
+      
       if (!result.id) {
-        throw new Error('Failed to create booking');
+        throw new Error('No se recibió ID de reserva');
       }
 
       // 2. Create Stripe checkout session
@@ -226,6 +230,14 @@ export default function BookingPage() {
         })
       });
       const checkoutData = await checkoutRes.json();
+
+      if (!checkoutRes.ok) {
+        // Si Stripe falla, aún así guardar la reserva como pending
+        console.error('Stripe checkout failed:', checkoutData.error);
+        alert('Reserva creada, pero el pago no está disponible ahora. Te contactaremos pronto.');
+        router.push('/success?booking_id=' + result.id);
+        return;
+      }
 
       // 3. Redirect to Stripe checkout
       if (checkoutData.url) {
