@@ -161,7 +161,7 @@ export async function GET(request: Request) {
     
     tableY += 15
     
-    // Prices lookup
+    // Prices lookup - solo para fallback
     const servicePrices: Record<string, number> = {
       'maternity': 250,
       'newborn': 250,
@@ -171,15 +171,16 @@ export async function GET(request: Request) {
       'pregnant gold': 350,
       'pregnant silver': 250
     }
-    const sessionPrice = booking.sessionCost || servicePrices[booking.serviceTier?.toLowerCase()] || 250
+    // Usar totalAmount del booking (precio real cobrado)
+    const basePrice = parseFloat(booking.totalAmount) || parseFloat(booking.sessionCost) || servicePrices[booking.serviceTier?.toLowerCase()] || 250
     
     // Conceptos
     const concepts: { desc: string; price: number }[] = []
     
-    // Servicio principal
+    // Servicio principal - mostrar el paquete y precio real
     concepts.push({ 
-      desc: `Sesión de Fotos - ${booking.serviceType || 'Fotografía'}`, 
-      price: sessionPrice 
+      desc: `${booking.serviceType || 'Sesión de Fotos'} - ${booking.serviceTier || 'Paquete'}`, 
+      price: basePrice
     })
     
     // Servicios adicionales
