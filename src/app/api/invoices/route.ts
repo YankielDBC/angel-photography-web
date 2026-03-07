@@ -10,14 +10,14 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client)
 const TABLE_NAME = 'angel-bookings'
 
-// Colores de marca - Rose Gold Theme v2.0
-console.log('🎨 Invoice PDF loading - Rose Gold Theme v2.0')
+// Colores de marca - Professional Theme
+console.log('Invoice PDF loading - Professional Theme')
 
-// Helper para colores RGB
-const primary = [199, 124, 142]    // Rose gold
+// Helper para colores RGB - usando amber de la web
+const primary = [217, 119, 6]    // amber-600
 const secondary = [60, 60, 60]      // Dark gray
-const accent = [255, 192, 203]     // Pink
-const light = [250, 245, 247]      // Light pink bg
+const accent = [251, 191, 36]     // amber-400
+const light = [255, 251, 245]      // amber-50 bg
 const text = [50, 50, 50]          // Near black
 const muted = [128, 128, 128]       // Gray
 
