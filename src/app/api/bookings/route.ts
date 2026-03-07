@@ -10,14 +10,11 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client)
 const TABLE_NAME = 'angel-bookings'
 
-// GET - Listar todas las reservas
+// GET - Listar todas las reservas (incluyendo canceladas)
 export async function GET() {
   try {
     const result = await docClient.send(new ScanCommand({
-      TableName: TABLE_NAME,
-      FilterExpression: 'attribute_not_exists(#status) OR #status <> :cancelled',
-      ExpressionAttributeNames: { '#status': 'status' },
-      ExpressionAttributeValues: { ':cancelled': 'cancelled' }
+      TableName: TABLE_NAME
     }))
     
     return NextResponse.json(result.Items || [])

@@ -471,29 +471,40 @@ function KpiCard({ title, value, subtext, color }: { title: string; value: strin
 function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
   // Filter by status for correct calculations
   // pending: $100 deposit + resto pendiente
-  // confirmed: pagó todo
+  // confirmed: pagó el depósito pero NO el resto (pendiente = total - depositPaid)
   // completed: sesión realizada, pagó todo
-  // cancelled: solo los $100 deposit (el resto NO se cobra)
+  // cancelled: solo los $100 deposit (el resto NO se cobra - ya no es pendiente)
   
   const pendingBookings = bookings.filter(b => b.status === 'pending')
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed')
+  const confirmedBookings = bookings.filter(b => b.status === 'confirmed')
+  const completedBookings = bookings.filter(b => b.status === 'completed')
   const cancelledBookings = bookings.filter(b => b.status === 'cancelled')
   
-  // Facturado = $100 deposit de todas las reservas (pending + cancelled) + totalAmount de confirmed/completed
+  // Facturado = $100 deposit de pending + confirmed + cancelled (solo el depósito, NO el resto)
+  // Para pending/confirmed: solo el depósito está facturado
+  // Para cancelled: el depósito está facturado (asistieron y pagaron pero no vinieron)
+  // Para completed: el total está facturado
   const depositFromPending = pendingBookings.reduce((sum, b) => sum + (b.depositPaid || 100), 0)
+  const depositFromConfirmed = confirmedBookings.reduce((sum, b) => sum + (b.depositPaid || 100), 0)
   const depositFromCancelled = cancelledBookings.reduce((sum, b) => sum + (b.depositPaid || 100), 0)
-  const totalFromConfirmed = confirmedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
-  const totalFacturado = depositFromPending + depositFromCancelled + totalFromConfirmed
+  const totalFromCompleted = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
+  const totalFacturado = depositFromPending + depositFromConfirmed + depositFromCancelled + totalFromCompleted
   
-  // Pendiente = (totalAmount - $100) de reservas PENDING
-  // Lo que falta por pagar de las reservas que aún no confirman
-  const totalPending = pendingBookings.reduce((sum, b) => {
+  // Pendiente = (totalAmount - depositPaid) de reservas PENDING y CONFIRMED
+  // - pending: no ha pagado nada, pendiente = total - 100
+  // - confirmed: pagó el depósito, pendiente = total - depositPaid
+  // - cancelled: NO hay pendiente (el cliente no asistió, no paga el resto)
+  const totalPending = [
+    ...pendingBookings,
+    ...confirmedBookings
+  ].reduce((sum, b) => {
+    const deposit = b.depositPaid || 100
     const additional = b.additionalServicesCost || 0
-    return sum + (b.totalAmount - 100) + additional
+    return sum + (b.totalAmount - deposit) + additional
   }, 0)
   
   // Costs (sessionCost = costo del photographer para esa sesión)
-  const totalCosts = confirmedBookings.reduce((sum, b) => sum + (b.sessionCost || 0), 0)
+  const totalCosts = [...confirmedBookings, ...completedBookings].reduce((sum, b) => sum + (b.sessionCost || 0), 0)
   
   // Beneficio = facturado - costos
   const beneficio = totalFacturado - totalCosts
