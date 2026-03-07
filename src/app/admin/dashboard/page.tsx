@@ -971,9 +971,12 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
         link.href = data.pdf
         link.download = data.filename || `factura-${booking.id}.pdf`
         link.click()
+      } else if (data.error) {
+        alert('Error: ' + data.error)
       }
     } catch (err) {
       console.error('Error downloading invoice:', err)
+      alert('Error al descargar factura')
     }
   }
   
