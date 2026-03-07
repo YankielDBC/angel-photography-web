@@ -435,7 +435,15 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
               {upcomingBookings.slice(0, 5).map(booking => (
                 <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full p-3 lg:p-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors text-left">
                   <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{booking.client.name}</p><p className="text-xs text-gray-500">{formatServiceType(booking.serviceType)} - {formatServiceTier(booking.serviceTier)}</p></div>
-                  <div className="text-right shrink-0"><p className="text-xs text-gray-500">{formatDate(booking.sessionDate)} - {formatTime(booking.sessionTime)}</p><div className="flex items-center justify-end gap-2 mt-1">{booking.status === 'confirmed' || booking.status === 'completed' ? <span className="text-xs text-green-600">${booking.totalAmount}</span> : <><span className="text-xs text-amber-500">${((booking.remainingPaid || 0) + (booking.additionalServicesCost || 0))}</span><span className="text-xs text-green-500">+${booking.depositPaid}</span></>}</div></div>
+                  <div className="text-right shrink-0"><p className="text-xs text-gray-500">{formatDate(booking.sessionDate)} - {formatTime(booking.sessionTime)}</p><div className="flex items-center justify-end gap-2 mt-1">
+                    {booking.status === 'completed' ? (
+                      <span className="text-xs text-green-600">${booking.totalAmount} (completo)</span>
+                    ) : booking.status === 'confirmed' ? (
+                      <><span className="text-xs text-amber-500">${booking.totalAmount - booking.depositPaid} pend</span><span className="text-xs text-green-500">+${booking.depositPaid}</span></>
+                    ) : (
+                      <><span className="text-xs text-amber-500">${((booking.remainingPaid || 0) + (booking.additionalServicesCost || 0))}</span><span className="text-xs text-green-500">+${booking.depositPaid}</span></>
+                    )}
+                  </div></div>
                 </button>
               ))}
             </div>
@@ -846,7 +854,15 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
         {filteredBookings.length === 0 ? <div className="text-center py-8 text-gray-400 text-sm">No se encontraron reservas</div> : filteredBookings.map(booking => (
           <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full bg-white rounded-xl p-3 lg:p-4 border border-gray-200 hover:border-amber-300 transition-colors text-left">
             <div className="flex items-start justify-between gap-3 mb-2"><div className="min-w-0 flex-1"><p className="font-medium text-sm truncate">{booking.client.name}</p><p className="text-xs text-gray-500 truncate">{booking.client.email}</p></div><StatusBadge status={booking.status} /></div>
-            <div className="flex items-center justify-between text-xs"><div className="flex gap-3 text-gray-500"><span>{formatDate(booking.sessionDate)}</span><span>{formatTime(booking.sessionTime)}</span></div><div className="flex gap-2">{booking.status === 'confirmed' || booking.status === 'completed' ? <span className="text-green-600">${booking.totalAmount}</span> : <><span className="text-amber-500">${((booking.remainingPaid || 0) + (booking.additionalServicesCost || 0))}</span><span className="text-green-500">+${booking.depositPaid}</span></>}</div></div>
+            <div className="flex items-center justify-between text-xs"><div className="flex gap-3 text-gray-500"><span>{formatDate(booking.sessionDate)}</span><span>{formatTime(booking.sessionTime)}</span></div><div className="flex gap-2">
+              {booking.status === 'completed' ? (
+                <span className="text-green-600">${booking.totalAmount} (completo)</span>
+              ) : booking.status === 'confirmed' ? (
+                <><span className="text-amber-500">${booking.totalAmount - booking.depositPaid} pend</span><span className="text-green-500">+${booking.depositPaid}</span></>
+              ) : (
+                <><span className="text-amber-500">${((booking.remainingPaid || 0) + (booking.additionalServicesCost || 0))}</span><span className="text-green-500">+${booking.depositPaid}</span></>
+              )}
+            </div></div>
             <p className="text-xs text-amber-600 mt-2">{formatServiceType(booking.serviceType)} - {formatServiceTier(booking.serviceTier)}</p>
           </button>
         ))}
