@@ -11,15 +11,15 @@ const docClient = DynamoDBDocumentClient.from(client)
 const TABLE_NAME = 'angel-bookings'
 
 // Colores de marca - Professional Theme
-console.log('Invoice PDF loading - Professional Theme')
+console.log('Invoice PDF loading - Gold & Black Theme')
 
-// Helper para colores RGB - usando amber de la web
-const primary = [217, 119, 6]    // amber-600
-const secondary = [60, 60, 60]      // Dark gray
-const accent = [251, 191, 36]     // amber-400
-const light = [255, 251, 245]      // amber-50 bg
-const text = [50, 50, 50]          // Near black
-const muted = [128, 128, 128]       // Gray
+// Helper para colores RGB - gold & black como el email
+const primary = [201, 169, 98]    // gold #c9a962
+const secondary = [26, 26, 26]    // black #1a1a1a
+const accent = [168, 139, 74]     // gold darker #a88b4a
+const light = [250, 250, 250]     // light gray
+const text = [26, 26, 26]         // near black
+const muted = [100, 100, 100]     // gray
 
 // Logo URL pública
 const LOGO_URL = 'https://gateway.pinata.cloud/ipfs/bafkreidjqv5own6ssb2k6rzzarllb7wzpdv4y6wgqmmtubsfgzvvaaedju'
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     const pageWidth = doc.internal.pageSize.getWidth()
     
     // ===== HEADER CON COLOR =====
-    // Barra superior amber
+    // Barra superior gold
     doc.setFillColor(primary[0], primary[1], primary[2])
     doc.rect(0, 0, pageWidth, 35, 'F')
     
