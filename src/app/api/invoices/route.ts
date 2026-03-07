@@ -95,10 +95,10 @@ export async function GET(request: Request) {
     
     // Estado con badge
     const statusConfig: Record<string, { label: string; color: number[] }> = {
-      pending: { label: '⏳ Pendiente', color: [255, 193, 7] },
-      confirmed: { label: '✓ Confirmada', color: [40, 167, 69] },
-      completed: { label: '✓ Completada', color: [22, 160, 133] },
-      cancelled: { label: '✕ Cancelada', color: [220, 53, 69] }
+      pending: { label: '[Pendiente]', color: [255, 193, 7] },
+      confirmed: { label: '[Confirmada]', color: [40, 167, 69] },
+      completed: { label: '[Completada]', color: [22, 160, 133] },
+      cancelled: { label: '[Cancelada]', color: [220, 53, 69] }
     }
     const status = statusConfig[booking.status] || { label: booking.status, color: [108, 117, 125] }
     
@@ -118,7 +118,7 @@ export async function GET(request: Request) {
     doc.setTextColor(primary[0], primary[1], primary[2])
     doc.setFontSize(11)
     doc.setFont('helvetica', 'bold')
-    doc.text('👤 CLIENTE', 20, sectionY + 5)
+    doc.text('CLIENTE', 20, sectionY + 5)
     
     doc.setTextColor(text[0], text[1], text[2])
     doc.setFontSize(10)
@@ -134,7 +134,7 @@ export async function GET(request: Request) {
     doc.setTextColor(primary[0], primary[1], primary[2])
     doc.setFontSize(11)
     doc.setFont('helvetica', 'bold')
-    doc.text('📸 SERVICIO', 110, sectionY + 5)
+    doc.text('SERVICIO', 110, sectionY + 5)
     
     doc.setTextColor(text[0], text[1], text[2])
     doc.setFontSize(10)
@@ -236,8 +236,8 @@ export async function GET(request: Request) {
     doc.text(`$${total.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
     tableY += 8
     
-    // Depósito
-    doc.text('Depósito pagado:', 120, tableY)
+    // Deposito
+    doc.text('Deposito pagado:', 120, tableY)
     doc.setTextColor(40, 167, 69)
     doc.text(`-$${deposit.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
     tableY += 10
@@ -256,7 +256,7 @@ export async function GET(request: Request) {
       doc.setTextColor(40, 167, 69)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(12)
-      doc.text('PAGADO ✓', 120, tableY + 5)
+      doc.text('PAGADO', 120, tableY + 5)
     }
     
     // ===== FOOTER =====
@@ -275,7 +275,7 @@ export async function GET(request: Request) {
     doc.setTextColor(primary[0], primary[1], primary[2])
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
-    doc.text('✦ ANGEL PHOTOGRAPHY MIAMI ✦', pageWidth / 2, footerY + 22, { align: 'center' })
+    doc.text('ANGEL PHOTOGRAPHY MIAMI', pageWidth / 2, footerY + 22, { align: 'center' })
     
     // Convertir a base64
     const pdfBase64 = doc.output('datauristring')
