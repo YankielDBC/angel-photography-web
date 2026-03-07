@@ -934,13 +934,21 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                       {fullBooking?.clientName || fullBooking?.client?.name || 'Reservado'} {statusLabel}
                     </button>
                   ) : (
-                    <span className="text-gray-400 text-xs">Disponible</span>
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-gray-400 text-xs">Disponible</span>
+                      <button onClick={() => handleBlockSlot(time)} className="ml-auto text-xs text-gray-500 hover:text-gray-700">🔒</button>
+                    </div>
                   )}
                 </div>
               )
             })}
           </div>
           {hasDayBookings && <p className="text-xs text-amber-500 mt-3 text-center">⚠️ No se puede bloquear el día porque hay reservas.</p>}
+          {!hasDayBookings && (
+            <div className="flex gap-2 mt-3">
+              <button onClick={handleBlockDay} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium">Bloquear Día</button>
+            </div>
+          )}
         </div>
       )}
     </div>
