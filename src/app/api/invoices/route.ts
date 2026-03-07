@@ -10,6 +10,16 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client)
 const TABLE_NAME = 'angel-bookings'
 
+// Colores de marca
+const COLORS = {
+  primary: [199, 124, 142],    // Rose gold
+  secondary: [60, 60, 60],      // Dark gray
+  accent: [255, 192, 203],     // Pink
+  light: [250, 245, 247],      // Light pink bg
+  text: [50, 50, 50],          // Near black
+  muted: [128, 128, 128]       // Gray
+}
+
 // GET - Generar factura PDF por ID de reserva
 export async function GET(request: Request) {
   try {
@@ -32,76 +42,125 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
     }
     
-    // Generar PDF
+    // Generar PDF mejorado
     const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
     
-    // Encabezado
-    doc.setFontSize(20)
+    // ===== HEADER CON COLOR =====
+    // Barra superior rose gold
+    doc.setFillColor(...COLORS.primary)
+    doc.rect(0, 0, pageWidth, 35, 'F')
+    
+    // Título
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(24)
     doc.setFont('helvetica', 'bold')
-    doc.text('FACTURA', 105, 20, { align: 'center' })
+    doc.text('FACTURA', pageWidth / 2, 22, { align: 'center' })
     
-    // Datos empresa
-    doc.setFontSize(12)
+    // Subtítulo
+    doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
-    doc.text('Angel Photography Miami', 20, 35)
-    doc.setFontSize(10)
-    doc.text('Miami, Florida, USA', 20, 42)
+    doc.text('Angel Photography Miami', pageWidth / 2, 30, { align: 'center' })
     
-    // Número de factura
-    doc.setFontSize(10)
-    doc.text(`Factura #: ${booking.id}`, 140, 35)
-    doc.text(`Fecha: ${new Date().toLocaleDateString('es-US')}`, 140, 42)
-    
-    // Estado del servicio
-    const statusColors: Record<string, string> = {
-      pending: 'Pendiente de Pago',
-      confirmed: 'Confirmada / Pagada',
-      completed: 'Completada',
-      cancelled: 'Cancelada'
-    }
-    
-    // Información del cliente
+    // ===== INFORMACIÓN DE LA EMPRESA (izquierda) =====
+    doc.setTextColor(...COLORS.text)
     doc.setFontSize(11)
     doc.setFont('helvetica', 'bold')
-    doc.text('Cliente:', 20, 55)
+    doc.text('Angel Photography Miami', 20, 50)
+    
     doc.setFont('helvetica', 'normal')
-    doc.text(booking.clientName || 'N/A', 20, 62)
-    doc.text(booking.clientEmail || '', 20, 69)
-    doc.text(booking.clientPhone || '', 20, 76)
+    doc.setFontSize(9)
+    doc.setTextColor(...COLORS.muted)
+    doc.text('Miami, Florida, USA', 20, 57)
+    doc.text('hello@angelphotographymiami.com', 20, 63)
+    doc.text('www.angelphotographymiami.com', 20, 69)
     
-    // Información de la sesión
-    doc.setFont('helvetica', 'bold')
-    doc.text('Servicio:', 110, 55)
-    doc.setFont('helvetica', 'normal')
-    doc.text(`${booking.serviceType} - ${booking.serviceTier}`, 110, 62)
-    doc.text(`Fecha: ${booking.sessionDate} ${booking.sessionTime || ''}`, 110, 69)
-    
-    // Estado
-    doc.setFont('helvetica', 'bold')
-    doc.text('Estado:', 110, 76)
-    doc.setFont('helvetica', 'normal')
-    const statusLabel = statusColors[booking.status] || booking.status
-    doc.text(statusLabel, 110, 83)
-    
-    // Línea separadora
-    doc.setLineWidth(0.5)
-    doc.line(20, 90, 190, 90)
-    
-    // Tabla de conceptos
-    let yPos = 100
-    
-    // Encabezado tabla
-    doc.setFont('helvetica', 'bold')
+    // ===== INFORMACIÓN DE LA FACTURA (derecha) =====
+    const invoiceX = 130
+    doc.setTextColor(...COLORS.text)
     doc.setFontSize(10)
-    doc.text('Concepto', 20, yPos)
-    doc.text('Monto', 170, yPos, { align: 'right' })
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Factura #: ${booking.id}`, invoiceX, 50)
     
-    yPos += 8
-    
-    // Filas según estado
     doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...COLORS.muted)
+    const invoiceDate = new Date().toLocaleDateString('es-US', { 
+      year: 'numeric', month: 'long', day: 'numeric' 
+    })
+    doc.text(`Fecha: ${invoiceDate}`, invoiceX, 57)
     
-    // Sesión de fotos
+    // Fecha de sesión
+    doc.text(`Sesión: ${booking.sessionDate || 'Por definir'}`, invoiceX, 64)
+    
+    // Estado con badge
+    const statusConfig: Record<string, { label: string; color: number[] }> = {
+      pending: { label: '⏳ Pendiente', color: [255, 193, 7] },
+      confirmed: { label: '✓ Confirmada', color: [40, 167, 69] },
+      completed: { label: '✓ Completada', color: [22, 160, 133] },
+      cancelled: { label: '✕ Cancelada', color: [220, 53, 69] }
+    }
+    const status = statusConfig[booking.status] || { label: booking.status, color: [108, 117, 125] }
+    
+    doc.setFillColor(...status.color)
+    doc.roundedRect(invoiceX, 70, 50, 8, 2, 2, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(8)
+    doc.text(status.label, invoiceX + 25, 75, { align: 'center' })
+    
+    // ===== SECCIÓN CLIENTE =====
+    const sectionY = 90
+    
+    // Fondo sutil
+    doc.setFillColor(...COLORS.light)
+    doc.roundedRect(15, sectionY - 5, pageWidth - 30, 35, 3, 3, 'F')
+    
+    doc.setTextColor(...COLORS.primary)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('👤 CLIENTE', 20, sectionY + 5)
+    
+    doc.setTextColor(...COLORS.text)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.text(booking.clientName || 'Cliente', 20, sectionY + 14)
+    
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...COLORS.muted)
+    doc.text(booking.clientEmail || '', 20, sectionY + 21)
+    doc.text(booking.clientPhone || '', 20, sectionY + 28)
+    
+    // ===== SERVICIO (derecha) =====
+    doc.setTextColor(...COLORS.primary)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('📸 SERVICIO', 110, sectionY + 5)
+    
+    doc.setTextColor(...COLORS.text)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.text(booking.serviceType || 'Sesión Fotográfica', 110, sectionY + 14)
+    
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...COLORS.muted)
+    doc.text(booking.serviceTier || '', 110, sectionY + 21)
+    doc.text(`${booking.sessionDate || ''} ${booking.sessionTime || ''}`.trim(), 110, sectionY + 28)
+    
+    // ===== TABLA DE CONCEPTOS =====
+    let tableY = 140
+    
+    // Encabezado de tabla
+    doc.setFillColor(...COLORS.primary)
+    doc.rect(15, tableY, pageWidth - 30, 10, 'F')
+    
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Concepto', 20, tableY + 7)
+    doc.text('Monto', pageWidth - 25, tableY + 7, { align: 'right' })
+    
+    tableY += 15
+    
+    // Prices lookup
     const servicePrices: Record<string, number> = {
       'maternity': 250,
       'newborn': 250,
@@ -111,80 +170,111 @@ export async function GET(request: Request) {
       'pregnant gold': 350,
       'pregnant silver': 250
     }
-    const servicePrice = servicePrices[booking.serviceTier?.toLowerCase()] || booking.totalAmount || 250
+    const sessionPrice = booking.sessionCost || servicePrices[booking.serviceTier?.toLowerCase()] || 250
     
-    // Si tiene sessionCost, usarlo
-    const sessionPrice = booking.sessionCost || servicePrice
+    // Conceptos
+    const concepts: { desc: string; price: number }[] = []
     
-    doc.text('Sesión de Fotos', 20, yPos)
-    doc.text(`$${sessionPrice.toFixed(2)}`, 170, yPos, { align: 'right' })
-    yPos += 8
+    // Servicio principal
+    concepts.push({ 
+      desc: `Sesión de Fotos - ${booking.serviceType || 'Fotografía'}`, 
+      price: sessionPrice 
+    })
     
     // Servicios adicionales
     if (booking.family2 || booking.family4) {
-      const familyCost = booking.family4 ? 75 : 50
-      doc.text('Sesión Familiar (2/4 personas)', 20, yPos)
-      doc.text(`$${familyCost.toFixed(2)}`, 170, yPos, { align: 'right' })
-      yPos += 8
+      concepts.push({ 
+        desc: 'Sesión Familiar (2/4 personas)', 
+        price: booking.family4 ? 75 : 50 
+      })
     }
     
     if (booking.hairMakeup) {
-      doc.text('Peinado y Maquillaje', 20, yPos)
-      doc.text('$75.00', 170, yPos, { align: 'right' })
-      yPos += 8
+      concepts.push({ desc: 'Peinado y Maquillaje', price: 75 })
     }
     
     if (booking.outdoor) {
-      doc.text('Locación Exterior', 20, yPos)
-      doc.text('$50.00', 170, yPos, { align: 'right' })
-      yPos += 8
+      concepts.push({ desc: 'Locación Exterior', price: 50 })
     }
     
-    // Servicios adicionales del booking
     if (booking.additionalServicesCost > 0) {
-      doc.text('Servicios Adicionales', 20, yPos)
-      doc.text(`$${booking.additionalServicesCost.toFixed(2)}`, 170, yPos, { align: 'right' })
-      yPos += 8
+      concepts.push({ desc: 'Servicios Adicionales', price: booking.additionalServicesCost })
     }
     
-    // Línea separadora antes de totales
-    yPos += 5
-    doc.line(20, yPos, 190, yPos)
-    yPos += 10
+    // Dibujar conceptos
+    doc.setTextColor(...COLORS.text)
+    doc.setFont('helvetica', 'normal')
     
-    // Calcular según estado
+    concepts.forEach((item, index) => {
+      const bgColor = index % 2 === 0 ? [255, 255, 255] : [250, 250, 250]
+      doc.setFillColor(...bgColor)
+      doc.rect(15, tableY - 4, pageWidth - 30, 12, 'F')
+      
+      doc.text(item.desc, 20, tableY + 3)
+      doc.text(`$${item.price.toFixed(2)}`, pageWidth - 25, tableY + 3, { align: 'right' })
+      tableY += 12
+    })
+    
+    // ===== TOTALES =====
+    tableY += 10
+    
     const deposit = parseFloat(booking.depositPaid) || 100
     const total = parseFloat(booking.totalAmount) || sessionPrice
+    const remaining = total - deposit
     
-    // Totales
-    doc.setFont('helvetica', 'bold')
-    doc.text('Total:', 130, yPos)
-    doc.text(`$${total.toFixed(2)}`, 170, yPos, { align: 'right' })
-    yPos += 8
+    // Línea
+    doc.setDrawColor(...COLORS.primary)
+    doc.setLineWidth(0.5)
+    doc.line(15, tableY, pageWidth - 15, tableY)
+    tableY += 10
+    
+    // Subtotal
+    doc.setTextColor(...COLORS.muted)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Subtotal:', 120, tableY)
+    doc.text(`$${total.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
+    tableY += 8
     
     // Depósito
-    doc.setFont('helvetica', 'normal')
-    doc.text('Depósito Pagado:', 130, yPos)
-    doc.text(`$${deposit.toFixed(2)}`, 170, yPos, { align: 'right' })
-    yPos += 8
+    doc.text('Depósito pagado:', 120, tableY)
+    doc.setTextColor(40, 167, 69)
+    doc.text(`-$${deposit.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
+    tableY += 10
     
-    // Pendiente
-    const remaining = total - deposit
+    // Total / Pendiente
+    doc.setDrawColor(200, 200, 200)
+    doc.line(120, tableY - 3, pageWidth - 15, tableY - 3)
+    
     if (remaining > 0) {
       doc.setTextColor(200, 100, 0)
-      doc.text('Pendiente:', 130, yPos)
-      doc.text(`$${remaining.toFixed(2)}`, 170, yPos, { align: 'right' })
-      doc.setTextColor(0, 0, 0)
-    } else if (booking.status === 'confirmed' || booking.status === 'completed') {
-      doc.setTextColor(0, 128, 0)
-      doc.text('PAGADO', 130, yPos)
-      doc.setTextColor(0, 0, 0)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(12)
+      doc.text('PENDIENTE:', 120, tableY + 5)
+      doc.text(`$${remaining.toFixed(2)}`, pageWidth - 25, tableY + 5, { align: 'right' })
+    } else {
+      doc.setTextColor(40, 167, 69)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(12)
+      doc.text('PAGADO ✓', 120, tableY + 5)
     }
     
-    // Footer
+    // ===== FOOTER =====
+    const footerY = 270
+    
+    // Nota
+    doc.setTextColor(...COLORS.muted)
     doc.setFontSize(8)
-    doc.setTextColor(128, 128, 128)
-    doc.text('Gracias por confiar en Angel Photography Miami', 105, 280, { align: 'center' })
+    doc.setFont('helvetica', 'italic')
+    doc.text('Gracias por confiar en nosotros para capturar tus momentos especiales.', pageWidth / 2, footerY, { align: 'center' })
+    
+    // Footer decorativo
+    doc.setFillColor(...COLORS.light)
+    doc.rect(0, footerY + 10, pageWidth, 20, 'F')
+    
+    doc.setTextColor(...COLORS.primary)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('✦ ANGEL PHOTOGRAPHY MIAMI ✦', pageWidth / 2, footerY + 22, { align: 'center' })
     
     // Convertir a base64
     const pdfBase64 = doc.output('datauristring')
