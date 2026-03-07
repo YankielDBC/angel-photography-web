@@ -24,6 +24,18 @@ const muted = [100, 100, 100]     // gray
 // Logo URL pública (GitHub raw)
 const LOGO_URL = 'https://raw.githubusercontent.com/YankielDBC/angel-photography-web/master/public/logo-invoice.png'
 
+// Función para obtener logo como base64
+async function getLogoBase64(): Promise<string | null> {
+  try {
+    const res = await fetch(LOGO_URL)
+    const buffer = await res.arrayBuffer()
+    const base64 = Buffer.from(buffer).toString('base64')
+    return base64
+  } catch {
+    return null
+  }
+}
+
 // GET - Generar factura PDF por ID de reserva
 export async function GET(request: Request) {
   try {
@@ -262,6 +274,9 @@ export async function GET(request: Request) {
     // ===== FOOTER =====
     const footerY = 260
     
+    // Obtener logo como base64
+    const logoBase64 = await getLogoBase64()
+    
     // Nota
     doc.setTextColor(muted[0], muted[1], muted[2])
     doc.setFontSize(8)
@@ -269,10 +284,17 @@ export async function GET(request: Request) {
     doc.text('Gracias por confiar en nosotros para capturar tus momentos especiales.', pageWidth / 2, footerY, { align: 'center' })
     
     // Logo centrado - tamaño mediano (como firma)
-    try {
-      doc.addImage(LOGO_URL, 'PNG', pageWidth / 2 - 25, footerY + 5, 50, 30)
-    } catch (e) {
-      // Fallback si no carga el logo
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, 'PNG', pageWidth / 2 - 25, footerY + 5, 50, 30)
+      } catch (e) {
+        // Fallback si no carga el logo
+        doc.setTextColor(primary[0], primary[1], primary[2])
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(12)
+        doc.text('ANGEL PHOTOGRAPHY MIAMI', pageWidth / 2, footerY + 20, { align: 'center' })
+      }
+    } else {
       doc.setTextColor(primary[0], primary[1], primary[2])
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(12)
