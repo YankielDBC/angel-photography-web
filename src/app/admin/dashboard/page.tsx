@@ -928,7 +928,7 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                     <button onClick={() => { 
                       if (fullBooking) onSelectBooking(fullBooking)
                     }} className="text-amber-600 hover:underline flex-1 text-left">
-                      {fullBooking?.client?.name || 'Reservado'} {statusLabel}
+                      {fullBooking?.clientName || fullBooking?.client?.name || 'Reservado'} {statusLabel}
                     </button>
                   ) : (
                     <span className="text-gray-400 text-xs">Disponible</span>
