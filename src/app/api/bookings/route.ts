@@ -15,9 +15,9 @@ export async function GET() {
   try {
     const result = await docClient.send(new ScanCommand({
       TableName: TABLE_NAME,
-      ScanFilter: {
-        status: { ComparisonOperator: 'NE', AttributeValueList: ['cancelled'] }
-      }
+      FilterExpression: 'attribute_not_exists(#status) OR #status <> :cancelled',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: { ':cancelled': 'cancelled' }
     }))
     
     return NextResponse.json(result.Items || [])
@@ -113,7 +113,8 @@ export async function POST(request: Request) {
     // Verificar si ya existe reserva para ese horario (evitar double booking)
     const existingCheck = await docClient.send(new ScanCommand({
       TableName: TABLE_NAME,
-      FilterExpression: 'sessionDate = :date AND sessionTime = :time AND status <> :cancelled',
+      FilterExpression: 'sessionDate = :date AND sessionTime = :time AND #status <> :cancelled',
+      ExpressionAttributeNames: { '#status': 'status' },
       ExpressionAttributeValues: {
         ':date': body.sessionDate,
         ':time': body.sessionTime,
