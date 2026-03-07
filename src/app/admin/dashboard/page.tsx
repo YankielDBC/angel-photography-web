@@ -10,6 +10,9 @@ import { saveAs } from 'file-saver'
 interface Booking {
   id: string
   client: { name: string; email: string; phone: string }
+  clientName?: string
+  clientEmail?: string
+  clientPhone?: string
   serviceType: string
   serviceTier: string
   sessionDate: string
