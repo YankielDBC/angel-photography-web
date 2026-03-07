@@ -979,6 +979,8 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
 }
 
 function ReportsView({ bookings }: { bookings: Booking[] }) {
+  const validBookings = bookings.filter(b => b.sessionDate && b.totalAmount)
+  
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [monthOffset, setMonthOffset] = useState(0)
@@ -1001,7 +1003,7 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
 
   const monthlyData = months.map(m => {
     // Parse date as local timezone to avoid UTC issues
-    const monthBookings = bookings.filter(b => { 
+    const monthBookings = validBookings.filter(b => { 
       const dateParts = b.sessionDate.split('-');
       const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
       return bookingDate.getMonth() === m.month && bookingDate.getFullYear() === m.year 
