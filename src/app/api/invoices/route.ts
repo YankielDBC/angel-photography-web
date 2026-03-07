@@ -73,7 +73,7 @@ export async function GET(request: Request) {
     doc.setFontSize(9)
     doc.setTextColor(muted[0], muted[1], muted[2])
     doc.text('Miami, Florida, USA', 20, 57)
-    doc.text('hello@angelphotographymiami.com', 20, 63)
+    doc.text('angelphotollc@gmail.com', 20, 63)
     doc.text('www.angelphotographymiami.com', 20, 69)
     
     // ===== INFORMACIÓN DE LA FACTURA (derecha) =====
