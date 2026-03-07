@@ -468,18 +468,20 @@ function KpiCard({ title, value, subtext, color }: { title: string; value: strin
 }
 
 function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
-  // Filter by status for correct calculations
+  // Filter bookings with valid data
+  const validBookings = bookings.filter(b => b.sessionDate && b.totalAmount)
+  
   // pending: $100 deposit pagado, resto pendiente
   // confirmed: TODO pagado, no hay pendiente
   // completed: sesión realizada
   // cancelled: solo $100 deposit (cliente no asistió), no hay pendiente
   
-  const pendingBookings = bookings.filter(b => b.status === 'pending')
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed')
-  const completedBookings = bookings.filter(b => b.status === 'completed')
-  const cancelledBookings = bookings.filter(b => b.status === 'cancelled')
+  const pendingBookings = validBookings.filter(b => b.status === 'pending')
+  const confirmedBookings = validBookings.filter(b => b.status === 'confirmed')
+  const completedBookings = validBookings.filter(b => b.status === 'completed')
+  const cancelledBookings = validBookings.filter(b => b.status === 'cancelled')
   
-  // Facturado = $100 deposit de pending + TOTAL de confirmed + completed + cancelled
+  // Facturado = $100 deposit de pending + TOTAL de confirmed + completed + cancelled (solo deposit, NO adicional)
   const depositFromPending = pendingBookings.reduce((sum, b) => sum + (b.depositPaid || 100), 0)
   const totalFromConfirmed = confirmedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
   const totalFromCompleted = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
@@ -487,7 +489,7 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
   const totalFacturado = depositFromPending + totalFromConfirmed + totalFromCompleted + depositFromCancelled
   
   // Pendiente = (totalAmount - $100) de reservas PENDING SOLO
-  // confirmed/cancelled no tienen pendiente
+  // confirmed/cancelled NO tienen pendiente porque ya se decidió su estado
   const totalPending = pendingBookings.reduce((sum, b) => {
     const deposit = b.depositPaid || 100
     const additional = b.additionalServicesCost || 0
@@ -1004,7 +1006,8 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
       return bookingDate.getMonth() === m.month && bookingDate.getFullYear() === m.year 
     })
-    // En reportes: confirmed y completed cuentan como ingreso completo
+    // En reportes: completed cuentan como ingreso completo (confirmed = TODO pagado)
+    // NO incluir cancelled porque solo tuvo el depósito, no es ingreso completo
     const completed = monthBookings.filter(b => b.status === 'completed' || b.status === 'confirmed')
     // Calcular gastos totales del mes (sessionCost + expenses)
     const totalExpenses = completed.reduce((sum, b) => {
@@ -1024,7 +1027,7 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
 
   const maxValue = Math.max(...monthlyData.map(m => m.revenue), 100)
   const selectedMonthData = monthlyData.find(m => m.month === selectedMonth && m.year === selectedYear) || monthlyData[0]
-  const selectedMonthBookings = bookings.filter(b => { 
+  const selectedMonthBookings = validBookings.filter(b => { 
     const dateParts = b.sessionDate.split('-');
     const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
     return bookingDate.getMonth() === selectedMonthData.month && bookingDate.getFullYear() === selectedMonthData.year 
