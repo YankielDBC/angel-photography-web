@@ -528,11 +528,11 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
                     {booking.status === 'completed' ? (
                       <span className="text-xs text-green-600">${booking.totalAmount}</span>
                     ) : booking.status === 'confirmed' ? (
-                      <span className="text-xs text-green-600">${booking.totalAmount} <span className="text-gray-400">(confirmado)</span></span>
+                      <span className="text-xs text-green-600">${booking.totalAmount}</span>
                     ) : booking.status === 'cancelled' ? (
-                      <span className="text-xs text-red-400 line-through">${booking.totalAmount} <span className="text-red-400">(cancelado)</span></span>
+                      <><span className="text-xs text-green-500">+${booking.depositPaid}</span><span className="text-xs text-red-400 line-through ml-1">${booking.totalAmount}</span></>
                     ) : (
-                      <><span className="text-xs text-amber-500">(${booking.totalAmount - booking.depositPaid})</span><span className="text-xs text-green-500">+${booking.depositPaid}</span></>
+                      <><span className="text-xs text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-xs text-green-500">+${booking.depositPaid}</span></>
                     )}
                   </div></div>
                 </button>
