@@ -219,9 +219,10 @@ export async function GET(request: Request) {
     // ===== TOTALES =====
     tableY += 10
     
+    // Calcular total como suma de todos los conceptos
+    const subtotal = concepts.reduce((sum, item) => sum + item.price, 0)
     const deposit = parseFloat(booking.depositPaid) || 100
-    const total = parseFloat(booking.totalAmount) || sessionPrice
-    const remaining = total - deposit
+    const remaining = subtotal - deposit
     
     // Línea
     doc.setDrawColor(primary[0], primary[1], primary[2])
@@ -233,7 +234,7 @@ export async function GET(request: Request) {
     doc.setTextColor(muted[0], muted[1], muted[2])
     doc.setFont('helvetica', 'normal')
     doc.text('Subtotal:', 120, tableY)
-    doc.text(`$${total.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
+    doc.text(`$${subtotal.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
     tableY += 8
     
     // Deposito
