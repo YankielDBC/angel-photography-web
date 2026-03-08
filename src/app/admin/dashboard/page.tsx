@@ -623,8 +623,8 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-2" onClick={onClose}>
-      <div className="bg-white border border-gray-200 rounded-xl w-full max-w-sm h-[75vh] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white border border-gray-200 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
         <div className="bg-amber-50 p-3 border-b border-amber-100 flex items-center justify-between shrink-0">
           <h3 className="font-semibold text-amber-700 text-sm">Reserva</h3>
           <button onClick={onClose} className="p-1 hover:bg-amber-100 rounded">
@@ -1064,8 +1064,12 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
       cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0)
     
-    // Gastos: sessionCost de confirmed + completed
-    const costos = [...confirmedInMonth, ...completedInMonth].reduce((sum: number, b: any) => sum + Number(b.sessionCost || 0), 0)
+    // Gastos: sessionCost + expenses de confirmed + completed
+    const costos = [...confirmedInMonth, ...completedInMonth].reduce((sum: number, b: any) => {
+      const sessionCost = Number(b.sessionCost || 0)
+      const bookingExpenses = b.expenses ? b.expenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0) : 0
+      return sum + sessionCost + bookingExpenses
+    }, 0)
     
     return { 
       ...m, 
