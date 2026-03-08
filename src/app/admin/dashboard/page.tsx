@@ -1097,7 +1097,9 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       </div>
 
       {/* Debug info */}
-      <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">{debug}</div>
+      <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">
+        {debug} | maxValue: {maxValue} | data: {JSON.stringify(monthlyData.map(m => ({ m: m.name, r: m.revenue })))}
+      </div>
 
       {/* Gráfica de ingresos por mes */}
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
