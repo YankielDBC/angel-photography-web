@@ -1102,15 +1102,25 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       {/* Gráfica de ingresos por mes */}
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
         <h3 className="text-sm font-medium mb-4">Ingresos por Mes (12 meses)</h3>
-        <div className="relative h-40 ml-8">
-          {/* Eje Y - escala en miles */}
-          <div className="absolute left-0 top-0 bottom-8 w-8 flex flex-col justify-between text-xs text-gray-400 text-right pr-2">
-            <span>${(maxValue / 1000).toFixed(0)}k</span>
-            <span>${(maxValue / 2000).toFixed(0)}k</span>
+        <div className="relative h-40 ml-12">
+          {/* Eje Y - escala en dólares */}
+          <div className="absolute left-0 top-0 bottom-8 w-10 flex flex-col justify-between text-xs text-gray-400 text-right pr-2">
+            <span>${(maxValue / 1000).toFixed(1)}k</span>
+            <span>${((maxValue / 1000) * 0.75).toFixed(0)}k</span>
+            <span>${((maxValue / 1000) * 0.5).toFixed(0)}k</span>
+            <span>${((maxValue / 1000) * 0.25).toFixed(0)}k</span>
             <span>$0</span>
           </div>
+          {/* Grid lines */}
+          <div className="absolute left-12 right-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
+            <div className="border-b border-gray-100 w-full"></div>
+            <div className="border-b border-gray-100 w-full"></div>
+            <div className="border-b border-gray-100 w-full"></div>
+            <div className="border-b border-gray-100 w-full"></div>
+            <div className="border-b border-gray-100 w-full"></div>
+          </div>
           {/* Barras */}
-          <div className="flex items-end gap-1 lg:gap-2 h-32 ml-8">
+          <div className="flex items-end gap-1 lg:gap-2 h-32 ml-12">
             {monthlyData.map((m, i) => (
               <button key={i} onClick={() => { setSelectedMonth(m.month); setSelectedYear(m.year) }} className={`flex-1 flex flex-col items-center gap-1 group ${selectedMonthData.month === m.month && selectedMonthData.year === m.year ? 'bg-amber-50 rounded-lg p-1' : ''}`}>
                 <div className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t transition-all group-hover:opacity-80" style={{ height: `${Math.max((m.revenue / maxValue) * 100, 2)}%` }}></div>
@@ -1120,7 +1130,7 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
           </div>
         </div>
         {/* Eje X - meses */}
-        <div className="flex justify-around text-xs text-gray-400 mt-2">
+        <div className="flex justify-around text-xs text-gray-400 mt-2 ml-12">
           <span>Ene</span><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dic</span>
         </div>
       </div>
