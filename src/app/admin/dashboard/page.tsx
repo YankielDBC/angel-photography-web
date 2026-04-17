@@ -1645,9 +1645,9 @@ function BookingsView({ bookings, formatDate, onSelectBooking, isMobile, setModa
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6 animate-fade-in-up">
+    <div className="space-y-4 p-3 md:p-6 animate-fade-in-up">
       {/* Compact header + search */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <h2 className="text-zinc-900 text-lg font-semibold whitespace-nowrap">Reservas</h2>
         <div className="flex-1 min-w-[200px] max-w-md relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
@@ -1660,6 +1660,35 @@ function BookingsView({ bookings, formatDate, onSelectBooking, isMobile, setModa
           />
         </div>
         <span className="text-zinc-400 text-xs">{filteredBookings.length} resultado{filteredBookings.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      {/* Date filters + Sort */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={e => setDateFrom(e.target.value)}
+            className="h-8 px-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-600"
+          />
+          <span className="text-zinc-400 text-xs">-</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={e => setDateTo(e.target.value)}
+            className="h-8 px-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-600"
+          />
+        </div>
+        <select
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value as any)}
+          className="h-8 px-2 text-xs rounded-lg border border-zinc-200 bg-white text-zinc-600 cursor-pointer"
+        >
+          <option value="date-asc">Fecha ↑</option>
+          <option value="date-desc">Fecha ↓</option>
+          <option value="name">Nombre</option>
+          <option value="status">Estado</option>
+        </select>
       </div>
 
       {/* Status filters */}
