@@ -60,9 +60,14 @@ function useScrollLock(isLocked: boolean) {
   useEffect(() => {
     if (isLocked) {
       const originalStyle = window.getComputedStyle(document.body).overflow
+      const originalPosition = window.getComputedStyle(document.body).position
       document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
       return () => {
         document.body.style.overflow = originalStyle
+        document.body.style.position = originalPosition
+        document.body.style.width = 'auto'
       }
     }
   }, [isLocked])
@@ -866,9 +871,9 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   
   const [sessionCost, setSessionCost] = useState(String(localBooking.sessionCost || ''))
   const [saving, setSaving] = useState(false)
-  const [showExtras, setShowExtras] = useState(false)
-  const [showPagos, setShowPagos] = useState(true)
-  const [showGastos, setShowGastos] = useState(false)
+  const [showExtras, setShowExtras] = useState(isMobile ? false : false)
+  const [showPagos, setShowPagos] = useState(isMobile ? true : true)
+  const [showGastos, setShowGastos] = useState(isMobile ? false : false)
   const [expensesOpen, setExpensesOpen] = useState(false)
   const [expenseAmount, setExpenseAmount] = useState('')
   const [expenseCategory, setExpenseCategory] = useState('gasolina')
@@ -939,20 +944,22 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
 
   const formatCurrency = (amount: number) => `$${amount.toLocaleString('es-ES')}`
 
-  const modalWidth = isMobile ? 'max-w-[95vw]' : 'max-w-xl'
-  const padding = isMobile ? 'p-3' : 'p-5'
-  const headerPadding = isMobile ? 'p-3' : 'p-5'
+  const modalWidth = isMobile ? 'max-w-[98vw] max-h-[85vh]' : 'max-w-xl max-h-[90vh]'
+  const padding = isMobile ? 'p-2' : 'p-5'
+  const headerPadding = isMobile ? 'p-2' : 'p-5'
+  const textSize = isMobile ? 'text-xs' : 'text-sm'
+  const titleSize = isMobile ? 'text-sm' : 'text-base'
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${isMobile ? 'p-2' : 'p-4'}`}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className={`animate-scale-in relative bg-white rounded-2xl shadow-xl w-full ${modalWidth} max-h-[90vh] overflow-y-auto`}>
-        <div className={`sticky top-0 bg-white border-b border-zinc-100 flex items-center justify-between z-10 rounded-t-2xl ${headerPadding}`}>
-          <h3 className="text-base md:text-lg font-semibold text-zinc-900">Detalle de Reserva</h3>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-xl"><svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+    <div className={`fixed inset-0 z-50 flex items-start justify-center ${isMobile ? 'pt-2 pb-4 px-1' : 'p-4'}`}>
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className={`animate-scale-in relative bg-white rounded-xl shadow-xl w-full ${modalWidth} overflow-hidden flex flex-col`}>
+        <div className={`shrink-0 bg-white border-b border-zinc-100 flex items-center justify-between ${headerPadding}`}>
+          <h3 className={`font-semibold text-zinc-900 ${titleSize}`}>Detalle de Reserva</h3>
+          <button onClick={onClose} className="p-1.5 hover:bg-zinc-100 rounded-lg"><svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
         
-        <div className={`${padding} space-y-4 md:space-y-5`}>
+        <div className={`flex-1 overflow-y-auto ${padding}`}>
           <section>
             <SectionTitle>Cliente</SectionTitle>
             <div className="space-y-2">
@@ -1896,35 +1903,35 @@ function ReportsView({ bookings, onEditCosts, isMobile }: { bookings: Booking[];
       </div>
 
       {/* P&L Cards */}
-      <div className="grid grid-cols-3 gap-4 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-        <div className="modern-card rounded-xl p-5 bg-gradient-to-br from-emerald-50/50 to-white border-emerald-100">
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+      <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-3 gap-4'} animate-fade-in-up`} style={{ animationDelay: '100ms' }}>
+        <div className={`modern-card rounded-xl p-4 md:p-5 ${isMobile ? 'bg-emerald-50' : 'bg-gradient-to-br from-emerald-50/50 to-white'} border-emerald-100`}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
             </div>
             <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Ingresos</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-600">${selectedMonthData.revenue}</p>
+          <p className="text-xl md:text-2xl font-bold text-emerald-600">${selectedMonthData.revenue}</p>
           <p className="text-xs text-zinc-400 mt-1">{selectedMonthData.bookings} reserva{selectedMonthData.bookings !== 1 ? 's' : ''}</p>
         </div>
-        <div className="modern-card rounded-xl p-5 bg-gradient-to-br from-rose-50/50 to-white border-rose-100">
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-9 h-9 rounded-lg bg-rose-100 flex items-center justify-center">
+        <div className={`modern-card rounded-xl p-4 md:p-5 ${isMobile ? 'bg-rose-50' : 'bg-gradient-to-br from-rose-50/50 to-white'} border-rose-100`}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-rose-100 flex items-center justify-center">
               <TrendingDown className="w-4 h-4 text-rose-600" />
             </div>
             <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider">Gastos</span>
           </div>
-          <p className="text-2xl font-bold text-rose-600">-${selectedMonthData.costs}</p>
+          <p className="text-xl md:text-2xl font-bold text-rose-600">-${selectedMonthData.costs}</p>
           <p className="text-xs text-zinc-400 mt-1">fijos mensuales</p>
         </div>
-        <div className={`modern-card rounded-xl p-5 bg-gradient-to-br ${selectedMonthData.profit >= 0 ? 'from-violet-50/50 to-white border-violet-100' : 'from-rose-50/50 to-white border-rose-100'}`}>
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selectedMonthData.profit >= 0 ? 'bg-violet-100' : 'bg-rose-100'}`}>
+        <div className={`modern-card rounded-xl p-4 md:p-5 ${isMobile ? (selectedMonthData.profit >= 0 ? 'bg-violet-50' : 'bg-rose-50') : 'bg-gradient-to-br '}${selectedMonthData.profit >= 0 ? (isMobile ? '' : 'from-violet-50/50 to-white') : (isMobile ? '' : 'from-rose-50/50 to-white')} border ${selectedMonthData.profit >= 0 ? 'border-violet-100' : 'border-rose-100'}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center ${selectedMonthData.profit >= 0 ? 'bg-violet-100' : 'bg-rose-100'}`}>
               {selectedMonthData.profit >= 0 ? <TrendingUp className="w-4 h-4 text-violet-600" /> : <TrendingDown className="w-4 h-4 text-rose-600" />}
             </div>
             <span className={`text-xs font-semibold uppercase tracking-wider ${selectedMonthData.profit >= 0 ? 'text-violet-600' : 'text-rose-600'}`}>Beneficio</span>
           </div>
-          <p className={`text-2xl font-bold ${selectedMonthData.profit >= 0 ? 'text-violet-600' : 'text-rose-600'}`}>
+          <p className={`text-xl md:text-2xl font-bold ${selectedMonthData.profit >= 0 ? 'text-violet-600' : 'text-rose-600'}`}>
             ${selectedMonthData.profit}
           </p>
           <p className="text-xs text-zinc-400 mt-1">neto</p>
@@ -2152,20 +2159,20 @@ function ManualBookingModal({ onClose, onSuccess, isMobile }: { onClose: () => v
     )
   }
 
-  const modalWidth = isMobile ? 'max-w-[95vw]' : 'max-w-xl'
-  const padding = isMobile ? 'p-3' : 'p-5'
-  const headerPadding = isMobile ? 'p-3' : 'p-5'
+  const modalWidth = isMobile ? 'max-w-[98vw] max-h-[85vh]' : 'max-w-xl max-h-[90vh]'
+  const padding = isMobile ? 'p-2' : 'p-5'
+  const headerPadding = isMobile ? 'p-2' : 'p-5'
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${isMobile ? 'p-2' : 'p-4'}`}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className={`animate-scale-in relative bg-white rounded-2xl shadow-xl w-full ${modalWidth} max-h-[90vh] overflow-y-auto`}>
-        <div className={`sticky top-0 bg-white border-b border-zinc-100 flex items-center justify-between z-10 rounded-t-2xl ${headerPadding}`}>
-          <h3 className="text-base md:text-lg font-semibold text-zinc-900">Nueva Reserva Manual</h3>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-xl"><svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+    <div className={`fixed inset-0 z-50 flex items-start justify-center ${isMobile ? 'pt-2 pb-4 px-1' : 'p-4'}`}>
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className={`animate-scale-in relative bg-white rounded-xl shadow-xl w-full ${modalWidth} overflow-hidden flex flex-col`}>
+        <div className={`shrink-0 bg-white border-b border-zinc-100 flex items-center justify-between ${headerPadding}`}>
+          <h3 className={`font-semibold text-zinc-900 ${isMobile ? 'text-sm' : 'text-base'}`}>Nueva Reserva Manual</h3>
+          <button onClick={onClose} className="p-1.5 hover:bg-zinc-100 rounded-lg"><svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
 
-        <form onSubmit={handleSubmit} className={`${padding} space-y-4 md:space-y-5`}>
+        <form onSubmit={handleSubmit} className={`flex-1 overflow-y-auto ${padding} space-y-4 md:space-y-5`}>
           {error && <div className="bg-rose-50 text-rose-600 p-3 rounded-xl text-sm">{error}</div>}
 
           <section>
