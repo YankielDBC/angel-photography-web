@@ -35,6 +35,39 @@ import {
   Search
 } from 'lucide-react'
 
+// Hook to detect mobile viewport
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false)
+  const [isTablet, setIsTablet] = useState(false)
+
+  useEffect(() => {
+    const checkDevice = () => {
+      const width = window.innerWidth
+      setIsMobile(width < breakpoint)
+      setIsTablet(width >= breakpoint && width < 1024)
+    }
+    
+    checkDevice()
+    window.addEventListener('resize', checkDevice)
+    return () => window.removeEventListener('resize', checkDevice)
+  }, [breakpoint])
+
+  return { isMobile, isTablet }
+}
+
+// Hook to lock body scroll when modal is open
+function useScrollLock(isLocked: boolean) {
+  useEffect(() => {
+    if (isLocked) {
+      const originalStyle = window.getComputedStyle(document.body).overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = originalStyle
+      }
+    }
+  }, [isLocked])
+}
+
 
 interface Booking {
   id: string
@@ -282,6 +315,7 @@ Angel Photography Miami
 }
 
 export default function AdminDashboard() {
+  const { isMobile, isTablet } = useIsMobile()
   const [view, setView] = useState<View>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('adminView') as View) || 'home'
@@ -294,7 +328,11 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [showManualBookingModal, setShowManualBookingModal] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const router = useRouter()
+
+  // Lock body scroll when any modal is open
+  useScrollLock(modalOpen || !!selectedBooking || showManualBookingModal)
 
   const NAV_ITEMS = [
     { id: 'home' as View, label: 'Inicio', icon: <Home className="w-[18px] h-[18px]" /> },
@@ -463,25 +501,25 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Fixed Header */}
-      <header className="h-[60px] bg-white border-b border-zinc-100 flex items-center justify-between px-4 md:px-6 sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden p-2 hover:bg-zinc-50 rounded-lg text-zinc-400">
+      {/* Fixed Header - always visible */}
+      <header className="h-[56px] md:h-[60px] bg-white border-b border-zinc-100 flex items-center justify-between px-3 md:px-6 sticky top-0 z-50">
+        <div className="flex items-center gap-2 md:gap-3">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-zinc-50 rounded-lg text-zinc-600">
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <Camera className="w-5 h-5 text-violet-600" />
-            <h1 className="text-lg font-bold text-zinc-900 tracking-tight">Angel Photo</h1>
+            <h1 className="text-base md:text-lg font-bold text-zinc-900 tracking-tight">Angel Photo</h1>
           </div>
-          <div className="hidden sm:block w-px h-5 bg-zinc-200" />
-          <span className="hidden sm:block text-zinc-400 text-sm font-medium">Admin</span>
+          <div className="hidden md:block w-px h-5 bg-zinc-200" />
+          <span className="hidden md:block text-zinc-400 text-sm font-medium">Admin</span>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-violet-500 to-violet-700 shadow-sm shadow-violet-200/60">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 md:w-8 h-7 md:h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-violet-500 to-violet-700 shadow-sm shadow-violet-200/60">
               A
             </div>
-            <span className="text-sm font-medium text-zinc-600 hidden sm:block">Admin</span>
+            <span className="text-sm font-medium text-zinc-600 hidden md:block">Admin</span>
           </div>
           <button onClick={handleLogout} className="text-zinc-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors duration-200">
             <LogOut className="w-4 h-4" />
@@ -582,20 +620,31 @@ export default function AdminDashboard() {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8 overflow-auto">
-          {view === 'home' && <HomeView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
-          {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} refreshCalendar={fetchData} setBookings={setBookings} />}
-          {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
-          {view === 'reports' && <ReportsView bookings={bookings} onEditCosts={() => {}} />}
+        <main className={`flex-1 ${isMobile ? 'pt-2' : 'md:ml-64'} p-3 md:p-6 lg:p-8 overflow-auto`}>
+          {view === 'home' && <HomeView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} isMobile={isMobile} setModalOpen={setModalOpen} />}
+          {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} refreshCalendar={fetchData} setBookings={setBookings} isMobile={isMobile} setModalOpen={setModalOpen} />}
+          {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} isMobile={isMobile} setModalOpen={setModalOpen} />}
+          {view === 'reports' && <ReportsView bookings={bookings} onEditCosts={() => {}} isMobile={isMobile} />}
         </main>
       </div>
 
-      {selectedBooking && <BookingModal booking={selectedBooking} onClose={() => { setSelectedBooking(null); fetchData(); }} onUpdateStatus={updateBookingStatus} onUpdateCost={updateSessionCost} onRefresh={fetchData} />}
+      {/* Modals - only render when needed */}
+      {selectedBooking && (
+        <BookingModal 
+          booking={selectedBooking} 
+          onClose={() => { setSelectedBooking(null); fetchData(); }} 
+          onUpdateStatus={updateBookingStatus} 
+          onUpdateCost={updateSessionCost} 
+          onRefresh={fetchData}
+          isMobile={isMobile}
+        />
+      )}
       
       {showManualBookingModal && (
         <ManualBookingModal 
           onClose={() => setShowManualBookingModal(false)} 
-          onSuccess={() => { setShowManualBookingModal(false); fetchData(); }} 
+          onSuccess={() => { setShowManualBookingModal(false); fetchData(); }}
+          isMobile={isMobile}
         />
       )}
     </div>
@@ -617,7 +666,7 @@ function KpiCard({ title, value, subtext, color, iconBg, iconColor }: { title: s
   )
 }
 
-function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
+function HomeView({ bookings, formatDate, onSelectBooking, isMobile, setModalOpen }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void; isMobile?: boolean; setModalOpen?: (open: boolean) => void }) {
   // Filter bookings with valid data
   const validBookings = bookings.filter(b => b.sessionDate && b.totalAmount)
   
@@ -805,7 +854,7 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
   )
 }
 
-function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefresh }: { booking: Booking; onClose: () => void; onUpdateStatus: (id: string, status: string) => void; onUpdateCost: (id: string, cost: number) => void; onRefresh?: () => void }) {
+function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefresh, isMobile }: { booking: Booking; onClose: () => void; onUpdateStatus: (id: string, status: string) => void; onUpdateCost: (id: string, cost: number) => void; onRefresh?: () => void; isMobile?: boolean }) {
   const [localBooking, setLocalBooking] = useState(booking)
   
   useEffect(() => { setLocalBooking(booking) }, [booking])
@@ -890,16 +939,20 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
 
   const formatCurrency = (amount: number) => `$${amount.toLocaleString('es-ES')}`
 
+  const modalWidth = isMobile ? 'max-w-[95vw]' : 'max-w-xl'
+  const padding = isMobile ? 'p-3' : 'p-5'
+  const headerPadding = isMobile ? 'p-3' : 'p-5'
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${isMobile ? 'p-2' : 'p-4'}`}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="animate-scale-in relative bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-zinc-100 p-5 flex items-center justify-between z-10 rounded-t-2xl">
-          <h3 className="text-lg font-semibold text-zinc-900">Detalle de Reserva</h3>
+      <div className={`animate-scale-in relative bg-white rounded-2xl shadow-xl w-full ${modalWidth} max-h-[90vh] overflow-y-auto`}>
+        <div className={`sticky top-0 bg-white border-b border-zinc-100 flex items-center justify-between z-10 rounded-t-2xl ${headerPadding}`}>
+          <h3 className="text-base md:text-lg font-semibold text-zinc-900">Detalle de Reserva</h3>
           <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-xl"><svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
         
-        <div className="p-5 space-y-5">
+        <div className={`${padding} space-y-4 md:space-y-5`}>
           <section>
             <SectionTitle>Cliente</SectionTitle>
             <div className="space-y-2">
@@ -996,7 +1049,7 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   )
 }
 
-function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void; refreshCalendar?: () => void; setBookings?: (b: Booking[]) => void }) {
+function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings, isMobile, setModalOpen }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void; refreshCalendar?: () => void; setBookings?: (b: Booking[]) => void; isMobile?: boolean; setModalOpen?: (open: boolean) => void }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [calendarData, setCalendarData] = useState<Record<string, any>>({})
@@ -1497,7 +1550,7 @@ const getTotalWithExtra = (booking: Booking | any): number => {
   return booking.totalAmount + getExtraIncome(booking)
 }
 
-function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
+function BookingsView({ bookings, formatDate, onSelectBooking, isMobile, setModalOpen }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void; isMobile?: boolean; setModalOpen?: (open: boolean) => void }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -1677,7 +1730,7 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
   )
 }
 
-function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCosts?: () => void }) {
+function ReportsView({ bookings, onEditCosts, isMobile }: { bookings: Booking[]; onEditCosts?: () => void; isMobile?: boolean }) {
   const validBookings = bookings.filter(b => b.sessionDate && b.totalAmount)
   
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
@@ -1952,7 +2005,7 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
   )
 }
 
-function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+function ManualBookingModal({ onClose, onSuccess, isMobile }: { onClose: () => void; onSuccess: () => void; isMobile?: boolean }) {
   const [formData, setFormData] = useState({
     clientName: '',
     clientEmail: '',
@@ -2070,16 +2123,20 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     )
   }
 
+  const modalWidth = isMobile ? 'max-w-[95vw]' : 'max-w-xl'
+  const padding = isMobile ? 'p-3' : 'p-5'
+  const headerPadding = isMobile ? 'p-3' : 'p-5'
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${isMobile ? 'p-2' : 'p-4'}`}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="animate-scale-in relative bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-zinc-100 p-5 flex items-center justify-between z-10 rounded-t-2xl">
-          <h3 className="text-lg font-semibold text-zinc-900">Nueva Reserva Manual</h3>
+      <div className={`animate-scale-in relative bg-white rounded-2xl shadow-xl w-full ${modalWidth} max-h-[90vh] overflow-y-auto`}>
+        <div className={`sticky top-0 bg-white border-b border-zinc-100 flex items-center justify-between z-10 rounded-t-2xl ${headerPadding}`}>
+          <h3 className="text-base md:text-lg font-semibold text-zinc-900">Nueva Reserva Manual</h3>
           <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-xl"><svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-5">
+        <form onSubmit={handleSubmit} className={`${padding} space-y-4 md:space-y-5`}>
           {error && <div className="bg-rose-50 text-rose-600 p-3 rounded-xl text-sm">{error}</div>}
 
           <section>
