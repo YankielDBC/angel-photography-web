@@ -1,0 +1,21 @@
+{
+  "name": "Angel Photography Miami",
+  "short_name": "Angel Photo",
+  "description": "Fotografía profesional en Miami. Sesiones de newborn, niños, maternidad, bodas y eventos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#35302a",
+  "theme_color": "#d4b577",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["photography", "business"],
+  "lang": "es",
+  "dir": "ltr"
+}
