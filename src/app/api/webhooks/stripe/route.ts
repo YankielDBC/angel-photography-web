@@ -30,6 +30,7 @@ function formatTime(timeStr: string) {
 async function sendEmail(booking: any) {
   const GMAIL_USER = process.env.GMAIL_USER || 'angelphotollc@gmail.com';
   const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+  const EMAIL_ADMIN = 'angelphotollc@gmail.com';
   
   console.log('sendEmail called for:', booking.clientEmail);
   
@@ -256,6 +257,7 @@ async function sendEmail(booking: any) {
     await transporter.sendMail({
       from: `"Angel Photography Miami" <angelphotollc@gmail.com>`,
       to: booking.clientEmail,
+      bcc: EMAIL_ADMIN,
       subject: `Reserva Confirmada - ${formatDate(booking.sessionDate)}`,
       html,
     });

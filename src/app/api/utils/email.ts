@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 
 const GMAIL_USER = process.env.GMAIL_USER || 'angelphotollc@gmail.com';
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+const EMAIL_ADMIN = 'angelphotollc@gmail.com'; // Copia para el administrador
 
 console.log('Email config - GMAIL_USER:', GMAIL_USER);
 console.log('Email config - GMAIL_APP_PASSWORD set:', !!GMAIL_APP_PASSWORD);
@@ -142,6 +143,7 @@ export async function sendRescheduleConfirmation(booking: {
   const mailOptions = {
     from: `"Angel Photography Miami" <${GMAIL_USER}>`,
     to: booking.clientEmail,
+    bcc: EMAIL_ADMIN,
     subject: `🔄 Tu sesión ha sido reagendada - ${formatDate(booking.sessionDate)}`,
     html,
   };
@@ -272,6 +274,7 @@ export async function sendReminderEmail(booking: {
   const mailOptions = {
     from: `"Angel Photography Miami" <${GMAIL_USER}>`,
     to: booking.clientEmail,
+    bcc: EMAIL_ADMIN,
     subject: `⏰ Recordatorio: Tu sesión de fotos es en ${timeframe}`,
     html,
   };
@@ -407,6 +410,7 @@ export async function sendBookingConfirmation(booking: {
   const mailOptions = {
     from: `"Angel Photography Miami" <${GMAIL_USER}>`,
     to: booking.clientEmail,
+    bcc: EMAIL_ADMIN,
     subject: `📸 Depósito Recibido - Reserva para ${formatDate(booking.sessionDate)}`,
     html,
   };
@@ -506,6 +510,7 @@ export async function sendManualBookingEmail(booking: {
   const mailOptions = {
     from: `"Angel Photography Miami" <${GMAIL_USER}>`,
     to: booking.clientEmail,
+    bcc: EMAIL_ADMIN,
     subject: `📸 Reserva Creada - Pendiente de Pago para ${formatDate(booking.sessionDate)}`,
     html,
   };
@@ -623,6 +628,7 @@ export async function sendCancellationEmail(booking: {
   const mailOptions = {
     from: `"Angel Photography Miami" <${GMAIL_USER}>`,
     to: booking.clientEmail,
+    bcc: EMAIL_ADMIN,
     subject: `😔 Reserva Cancelada - ${formatDate(booking.sessionDate)}`,
     html,
   };
