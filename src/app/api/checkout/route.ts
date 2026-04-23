@@ -17,6 +17,13 @@ export async function POST(request: Request) {
     const { bookingId, amount = 100 } = body
     console.log('Checkout - bookingId:', bookingId, 'amount:', amount)
 
+    // Calculate amount to cover Stripe fees (2.9% + $0.30)
+    // To receive exactly 'amount', we need to charge: (amount + fixed_fee) / (1 - percentage)
+    const STRIPE_PERCENTAGE = 0.029
+    const STRIPE_FIXED_FEE = 0.30
+    const amountWithFees = Math.ceil((amount + STRIPE_FIXED_FEE) / (1 - STRIPE_PERCENTAGE))
+    console.log('Amount with Stripe fees:', amount, '->', amountWithFees)
+
     const siteUrl = 'https://angelphotographymiami.com'
 
     // Use direct fetch instead of Stripe SDK
@@ -31,7 +38,7 @@ export async function POST(request: Request) {
         'line_items[0][price_data][currency]': 'usd',
         'line_items[0][price_data][product_data][name]': 'Angel Photography Miami - Sesión de Fotos',
         'line_items[0][price_data][product_data][description]': 'Depósito de reserva $100 USD',
-        'line_items[0][price_data][unit_amount]': String(Math.round(amount * 100)),
+        'line_items[0][price_data][unit_amount]': String(amountWithFees),
         'line_items[0][quantity]': '1',
         'mode': 'payment',
         'success_url': `${siteUrl}/success?session_id={CHECKOUT_SESSION_ID}`,

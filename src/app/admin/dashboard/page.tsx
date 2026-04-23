@@ -1013,17 +1013,54 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
               {expenses.filter(e => !e.isIncome).length > 0 && <div className="space-y-1">{expenses.filter(e => !e.isIncome).map((e, i) => (<div key={i} className="flex justify-between text-sm text-zinc-500"><span>💸 {e.category} {e.notes && `- ${e.notes}`}</span><span>-{formatCurrency(e.amount)}</span></div>))}</div>}
               <div className={`flex justify-between text-sm font-medium pt-2 border-t border-zinc-100 ${netAmount >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}><span>Total neto</span><span>{netAmount >= 0 ? '+' : ''}{formatCurrency(netAmount)}</span></div>
               <div className="flex gap-2 pt-2">
-                <button onClick={() => { setIsIncome(false); setExpensesOpen(true); }} className="flex-1 py-2 bg-zinc-100 text-zinc-600 rounded-lg text-xs hover:bg-zinc-200">+ Agregar Gasto</button>
-                <button onClick={() => { setIsIncome(true); setExpensesOpen(true); }} className="flex-1 py-2 bg-emerald-100 text-emerald-600 rounded-lg text-xs hover:bg-emerald-200">+ Agregar Propina</button>
+                <button 
+                  onClick={() => { setIsIncome(false); setExpensesOpen(true); }} 
+                  className="flex-1 py-2 bg-zinc-100 text-zinc-600 rounded-lg text-xs hover:bg-zinc-200"
+                  type="button"
+                >+ Agregar Gasto</button>
+                <button 
+                  onClick={() => { setIsIncome(true); setExpensesOpen(true); }} 
+                  className="flex-1 py-2 bg-emerald-100 text-emerald-600 rounded-lg text-xs hover:bg-emerald-200"
+                  type="button"
+                >+ Agregar Propina</button>
               </div>
               {expensesOpen && (
                 <div className="space-y-2 p-4 bg-zinc-50 rounded-xl border border-zinc-200">
-                  <input type="text" placeholder="Categoría" value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs" />
-                  <input type="number" placeholder="Monto" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs" />
-                  <input type="text" placeholder="Notas (opcional)" value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs" />
+                  <input 
+                    type="text" 
+                    placeholder="Categoría" 
+                    value={expenseCategory} 
+                    onChange={(e) => setExpenseCategory(e.target.value)} 
+                    className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs"
+                    inputMode="text"
+                  />
+                  <input 
+                    type="number" 
+                    placeholder="Monto" 
+                    value={expenseAmount} 
+                    onChange={(e) => setExpenseAmount(e.target.value)} 
+                    className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs"
+                    inputMode="decimal"
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Notas (opcional)" 
+                    value={expenseNotes} 
+                    onChange={(e) => setExpenseNotes(e.target.value)} 
+                    className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs"
+                    inputMode="text"
+                  />
                   <div className="flex gap-2">
-                    <button onClick={() => { setExpensesOpen(false); setExpenseAmount(''); setExpenseNotes(''); }} className="flex-1 py-2 bg-zinc-200 text-zinc-600 rounded-lg text-xs">Cancelar</button>
-                    <button onClick={handleAddExpense} className="flex-1 py-2 bg-violet-600 text-white rounded-lg text-xs">{isIncome ? 'Agregar Propina' : 'Agregar Gasto'}</button>
+                    <button 
+                      onClick={() => { setExpensesOpen(false); setExpenseAmount(''); setExpenseNotes(''); }} 
+                      className="flex-1 py-2 bg-zinc-200 text-zinc-600 rounded-lg text-xs"
+                      type="button"
+                    >Cancelar</button>
+                    <button 
+                      onClick={handleAddExpense} 
+                      className="flex-1 py-2 bg-violet-600 text-white rounded-lg text-xs"
+                      type="button"
+                    >{isIncome ? 'Agregar Propina' : 'Agregar Gasto'}</button>
                   </div>
                 </div>
               )}
