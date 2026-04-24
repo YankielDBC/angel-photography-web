@@ -19,9 +19,11 @@ export async function POST(request: Request) {
 
     // Calculate amount to cover Stripe fees (2.9% + $0.30)
     // To receive exactly 'amount', we need to charge: (amount + fixed_fee) / (1 - percentage)
+    // Add extra 1% buffer to ensure we always get at least the target amount
     const STRIPE_PERCENTAGE = 0.029
     const STRIPE_FIXED_FEE = 0.30
-    const amountWithFees = Math.ceil((amount + STRIPE_FIXED_FEE) / (1 - STRIPE_PERCENTAGE))
+    const BUFFER = 0.01 // 1% buffer for safety
+    const amountWithFees = Math.ceil((amount + STRIPE_FIXED_FEE) / (1 - STRIPE_PERCENTAGE - BUFFER))
     console.log('Amount with Stripe fees:', amount, '->', amountWithFees)
 
     const siteUrl = 'https://angelphotographymiami.com'
