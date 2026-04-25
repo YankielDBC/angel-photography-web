@@ -2134,14 +2134,24 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
 
   // Load blocked slots
   const [blockedSlots, setBlockedSlots] = useState<string[]>([])
+  const [bookingsData, setBookingsData] = useState<any[]>(bookings || [])
+  
+  // Sync bookings from props when they change
+  useEffect(() => {
+    if (bookings && bookings.length > 0) {
+      console.log('ManualBookingModal: Received bookings:', bookings.length)
+      setBookingsData(bookings)
+    }
+  }, [bookings])
   
   useEffect(() => {
     const loadBlockedSlots = async () => {
       try {
         const res = await fetch('/api/blocked-slots')
         const data = await res.json()
-        if (data.blocked) {
-          const slots = data.blocked.map((b: any) => `${b.date} ${b.time}`)
+        console.log('ManualBookingModal: Blocked slots loaded:', data.length || 0, data)
+        if (data && data.length > 0) {
+          const slots = data.map((b: any) => `${b.date} ${b.time}`)
           setBlockedSlots(slots)
         }
       } catch (e) { console.error('Error loading blocked slots:', e) }
@@ -2156,15 +2166,15 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
   const getAvailableTimes = (date: string) => {
     if (!date) return timeSlots
     
-    // Get all times that are booked or blocked for this date
     const occupiedTimes: string[] = []
     
-    // Add booked times
-    if (bookings && bookings.length > 0) {
-      const dateBookings = bookings.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
+    // Add booked times from local state
+    if (bookingsData && bookingsData.length > 0) {
+      const dateBookings = bookingsData.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
+      console.log('getAvailableTimes:', date, 'bookings found:', dateBookings.length)
       dateBookings.forEach((b: any) => {
-        const [h, m] = b.sessionTime.split(':')
-        occupiedTimes.push(`${parseInt(h)}:${m}`)
+        const timeParts = b.sessionTime.split(':')
+        occupiedTimes.push(`${parseInt(timeParts[0])}:${timeParts[1]}`)
       })
     }
     
@@ -2176,19 +2186,18 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
       }
     })
     
-    console.log('Date:', date, 'Occupied times:', occupiedTimes)
+    console.log('getAvailableTimes:', date, 'occupied:', occupiedTimes)
     return timeSlots.filter(t => !occupiedTimes.includes(t));
   }
 
   const isDateBlockedOrFull = (date: string) => {
     if (!date) return false
     
-    // Count occupied slots (booked + blocked)
     let occupiedCount = 0
     
     // Count booked slots
-    if (bookings && bookings.length > 0) {
-      const dateBookings = bookings.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
+    if (bookingsData && bookingsData.length > 0) {
+      const dateBookings = bookingsData.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
       occupiedCount += dateBookings.length
     }
     
@@ -2196,8 +2205,8 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
     const dateBlockedSlots = blockedSlots.filter(slot => slot.startsWith(date))
     occupiedCount += dateBlockedSlots.length
     
-    console.log('Date:', date, 'Occupied count:', occupiedCount)
-    return occupiedCount >= 5 // Full if 5+ slots taken
+    console.log('isDateBlockedOrFull:', date, 'total occupied:', occupiedCount, 'bookings:', bookingsData?.length || 0, 'blocked:', dateBlockedSlots.length)
+    return occupiedCount >= 5
   }
 
   const handlePackageChange = (packageId: string) => {
