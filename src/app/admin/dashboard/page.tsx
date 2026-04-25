@@ -2132,33 +2132,72 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
     loadPackages()
   }, [])
 
+  // Load blocked slots
+  const [blockedSlots, setBlockedSlots] = useState<string[]>([])
+  
+  useEffect(() => {
+    const loadBlockedSlots = async () => {
+      try {
+        const res = await fetch('/api/blocked-slots')
+        const data = await res.json()
+        if (data.blocked) {
+          const slots = data.blocked.map((b: any) => `${b.date} ${b.time}`)
+          setBlockedSlots(slots)
+        }
+      } catch (e) { console.error('Error loading blocked slots:', e) }
+    }
+    loadBlockedSlots()
+  }, [])
+
+  const isTimeBlocked = (date: string, time: string) => {
+    return blockedSlots.includes(`${date} ${time}`)
+  }
+
   const getAvailableTimes = (date: string) => {
     if (!date) return timeSlots
     
-    // Check bookings directly - this is more reliable
+    // Get all times that are booked or blocked for this date
+    const occupiedTimes: string[] = []
+    
+    // Add booked times
     if (bookings && bookings.length > 0) {
       const dateBookings = bookings.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
-      const bookedTimes = dateBookings.map((b: any) => {
+      dateBookings.forEach((b: any) => {
         const [h, m] = b.sessionTime.split(':')
-        return `${parseInt(h)}:${m}`
+        occupiedTimes.push(`${parseInt(h)}:${m}`)
       })
-      console.log('Date:', date, 'Bookings:', dateBookings.length, 'Booked times:', bookedTimes)
-      return timeSlots.filter(t => !bookedTimes.includes(t));
     }
     
-    return timeSlots
+    // Add blocked times
+    blockedSlots.forEach(slot => {
+      if (slot.startsWith(date)) {
+        const time = slot.replace(date + ' ', '')
+        occupiedTimes.push(time)
+      }
+    })
+    
+    console.log('Date:', date, 'Occupied times:', occupiedTimes)
+    return timeSlots.filter(t => !occupiedTimes.includes(t));
   }
 
   const isDateBlockedOrFull = (date: string) => {
     if (!date) return false
     
-    // Check if date has 5 or more bookings (all slots taken)
+    // Count occupied slots (booked + blocked)
+    let occupiedCount = 0
+    
+    // Count booked slots
     if (bookings && bookings.length > 0) {
       const dateBookings = bookings.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
-      console.log('Date:', date, 'Bookings count:', dateBookings.length)
-      return dateBookings.length >= 5
+      occupiedCount += dateBookings.length
     }
-    return false
+    
+    // Count blocked slots
+    const dateBlockedSlots = blockedSlots.filter(slot => slot.startsWith(date))
+    occupiedCount += dateBlockedSlots.length
+    
+    console.log('Date:', date, 'Occupied count:', occupiedCount)
+    return occupiedCount >= 5 // Full if 5+ slots taken
   }
 
   const handlePackageChange = (packageId: string) => {
