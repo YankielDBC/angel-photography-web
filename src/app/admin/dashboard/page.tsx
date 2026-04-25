@@ -1049,12 +1049,15 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
                     inputMode="text"
                   />
                   <input 
-                    type="number" 
+                    type="text" 
+                    inputMode="decimal" 
                     placeholder="Monto" 
                     value={expenseAmount} 
-                    onChange={(e) => setExpenseAmount(e.target.value)} 
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9.]/g, '')
+                      setExpenseAmount(val)
+                    }} 
                     className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs"
-                    inputMode="decimal"
                   />
                   <input 
                     type="text" 
@@ -1097,7 +1100,10 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
           <section>
             <SectionTitle>Costo de Sesión</SectionTitle>
             <div className="flex gap-2">
-              <input type="number" value={sessionCost} onChange={(e) => setSessionCost(e.target.value)} placeholder="0" className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm" />
+              <input type="text" inputMode="decimal" value={sessionCost} onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9.]/g, '')
+                setSessionCost(val)
+              }} placeholder="0" className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm" />
               <button onClick={handleSaveCost} disabled={saving} className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium shadow-sm">{saving ? 'Guardando...' : 'Guardar'}</button>
             </div>
           </section>
