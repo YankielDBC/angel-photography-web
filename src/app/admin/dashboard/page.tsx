@@ -2314,15 +2314,28 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
           <section>
             <SectionTitle>Fecha y Hora</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
-              <input 
-                required 
-                type="date" 
-                value={formData.sessionDate} 
-                onChange={e => setFormData({...formData, sessionDate: e.target.value, sessionTime: ''})} 
-                min={new Date().toISOString().split('T')[0]} 
-                className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm"
-                disabled={isDateBlockedOrFull(formData.sessionDate)}
-              />
+              <div>
+                <input 
+                  required 
+                  type="date" 
+                  value={formData.sessionDate} 
+                  onChange={e => {
+                    const selectedDate = e.target.value
+                    if (isDateBlockedOrFull(selectedDate)) {
+                      setError('Ese día está completo (5+ reservas)')
+                      setFormData({...formData, sessionDate: '', sessionTime: ''})
+                    } else {
+                      setError('')
+                      setFormData({...formData, sessionDate: selectedDate, sessionTime: ''})
+                    }
+                  }} 
+                  min={new Date().toISOString().split('T')[0]} 
+                  className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm"
+                />
+                {error && formData.sessionDate === '' && (
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
+                )}
+              </div>
               <select required value={formData.sessionTime} onChange={e => setFormData({...formData, sessionTime: e.target.value})} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm">
                 <option value="">Hora...</option>
                 {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => <option key={t} value={t}>{t}</option>)}
