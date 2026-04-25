@@ -2227,6 +2227,22 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Validate date is not full
+    if (formData.sessionDate && isDateBlockedOrFull(formData.sessionDate)) {
+      setError('Esa fecha está completa - escoge otra')
+      return
+    }
+
+    // Validate time is available
+    if (formData.sessionDate && formData.sessionTime) {
+      const available = getAvailableTimes(formData.sessionDate)
+      if (!available.includes(formData.sessionTime)) {
+        setError('Ese horario ya no está disponible')
+        return
+      }
+    }
+
     setSaving(true)
 
     try {
@@ -2328,60 +2344,31 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
           <section>
             <SectionTitle>Fecha y Hora</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="border border-zinc-200 rounded-xl p-2 bg-white max-h-48 overflow-y-auto">
-                  <div className="grid grid-cols-7 gap-1 text-xs">
-                    {['D', 'L', 'M', 'X', 'J', 'V', 'S'].map((d, i) => (
-                      <div key={i} className="text-center font-medium text-zinc-400">{d}</div>
-                    ))}
-                    {(() => {
-                      const today = new Date()
-                      today.setHours(0, 0, 0, 0)
-                      const dates: {date: string, full: boolean, past: boolean}[] = []
-                      for (let i = 0; i < 60; i++) {
-                        const d = new Date(today)
-                        d.setDate(today.getDate() + i)
-                        const dateStr = d.toISOString().split('T')[0]
-                        dates.push({
-                          date: dateStr,
-                          full: isDateBlockedOrFull(dateStr),
-                          past: dateStr < today.toISOString().split('T')[0]
-                        })
-                      }
-                      return dates.map((d) => (
-                        <button
-                          key={d.date}
-                          type="button"
-                          disabled={d.full || d.past}
-                          onClick={() => {
-                            if (!d.full && !d.past) {
-                              setFormData({...formData, sessionDate: d.date, sessionTime: ''})
-                              setError('')
-                            }
-                          }}
-                          className={`p-2 text-sm rounded-lg transition-colors ${
-                            formData.sessionDate === d.date 
-                              ? 'bg-violet-600 text-white' 
-                              : d.full || d.past
-                                ? 'bg-zinc-100 text-zinc-300 cursor-not-allowed line-through'
-                                : 'hover:bg-violet-100 text-zinc-700'
-                          }`}
-                        >
-                          {parseInt(d.date.split('-')[2])}
-                        </button>
-                      ))
-                    })()}
-                  </div>
-                </div>
-                {formData.sessionDate && (
-                  <p className="text-xs text-violet-600 mt-1">Selected: {formData.sessionDate}</p>
-                )}
+              <div className="relative">
+                <input 
+                  required 
+                  type="date" 
+                  value={formData.sessionDate} 
+                  onChange={e => {
+                    const selectedDate = e.target.value
+                    if (selectedDate && isDateBlockedOrFull(selectedDate)) {
+                      setError('Ese día está completo - escoge otra fecha')
+                      setFormData({...formData, sessionDate: '', sessionTime: ''})
+                    } else {
+                      setError('')
+                      setFormData({...formData, sessionDate: selectedDate, sessionTime: ''})
+                    }
+                  }} 
+                  min={new Date().toISOString().split('T')[0]} 
+                  className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm"
+                />
               </div>
               <select required value={formData.sessionTime} onChange={e => setFormData({...formData, sessionTime: e.target.value})} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm">
                 <option value="">Hora...</option>
                 {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </section>
 
           <section>
