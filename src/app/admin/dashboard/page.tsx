@@ -334,6 +334,7 @@ export default function AdminDashboard() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [showManualBookingModal, setShowManualBookingModal] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [calendarData, setCalendarData] = useState<Record<string, any>>({})
   const router = useRouter()
 
   // Lock body scroll when any modal is open
@@ -372,6 +373,7 @@ export default function AdminDashboard() {
     if (!token) { router.push('/admin'); return }
     fetchData()
     fetchPackages()
+    loadCalendarData()
     
     // Auto-cancel: reservas pending con más de 24 horas de su cita se cancelan automáticamente
     const autoCancelOldPending = async () => {
@@ -381,6 +383,16 @@ export default function AdminDashboard() {
     }
     autoCancelOldPending()
   }, [])
+
+  const loadCalendarData = async () => {
+    try {
+      const now = new Date()
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      const res = await fetch(`/api/calendar?month=${month}`)
+      const data = await res.json()
+      if (data.availability) setCalendarData(data.availability)
+    } catch (e) { console.error('Error loading calendar:', e) }
+  }
 
   const fetchData = async () => {
     try {
@@ -650,6 +662,8 @@ export default function AdminDashboard() {
           onClose={() => setShowManualBookingModal(false)} 
           onSuccess={() => { setShowManualBookingModal(false); fetchData(); }}
           isMobile={isMobile}
+          calendarData={calendarData}
+          bookings={bookings}
         />
       )}
     </div>
@@ -2078,7 +2092,7 @@ function ReportsView({ bookings, onEditCosts, isMobile }: { bookings: Booking[];
   )
 }
 
-function ManualBookingModal({ onClose, onSuccess, isMobile }: { onClose: () => void; onSuccess: () => void; isMobile?: boolean }) {
+function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookings }: { onClose: () => void; onSuccess: () => void; isMobile?: boolean; calendarData?: Record<string, any>; bookings?: any[] }) {
   const [formData, setFormData] = useState({
     clientName: '',
     clientEmail: '',
@@ -2094,7 +2108,6 @@ function ManualBookingModal({ onClose, onSuccess, isMobile }: { onClose: () => v
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [calendarData, setCalendarData] = useState<Record<string, any>>({})
   const [packages, setPackages] = useState<Record<string, any>>({})
   const [sessionTypes, setSessionTypes] = useState<any[]>([])
 
@@ -2119,26 +2132,38 @@ function ManualBookingModal({ onClose, onSuccess, isMobile }: { onClose: () => v
     loadPackages()
   }, [])
 
-  useEffect(() => {
-    const loadMonth = async () => {
-      const now = new Date()
-      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-      try {
-        const res = await fetch(`/api/calendar?month=${month}`)
-        const data = await res.json()
-        if (data.availability) setCalendarData(data.availability)
-      } catch (e) { console.error('Error loading calendar:', e) }
-    }
-    loadMonth()
-  }, [])
-
   const getAvailableTimes = (date: string) => {
-    const dayData = calendarData[date]
-    if (!dayData) return timeSlots
-    return timeSlots.filter(t => {
-      const slot = dayData.slots?.find((s: any) => s.time === t)
-      return slot?.status === 'available'
-    })
+    // First check calendarData from API
+    const dayData = calendarData?.[date]
+    if (dayData?.slots) {
+      return timeSlots.filter(t => {
+        const slot = dayData.slots.find((s: any) => s.time === t)
+        return slot?.status === 'available'
+      })
+    }
+    
+    // Fallback: check bookings directly
+    if (bookings) {
+      const dateBookings = bookings.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
+      const bookedTimes = dateBookings.map((b: any) => {
+        const [h, m] = b.sessionTime.split(':')
+        return `${parseInt(h)}:${m}`
+      })
+      return timeSlots.filter(t => !bookedTimes.includes(t))
+    }
+    
+    return timeSlots
+  }
+
+  const isDateBlockedOrFull = (date: string) => {
+    const dayData = calendarData?.[date]
+    if (dayData?.status === 'blocked' || dayData?.status === 'full') return true
+    
+    if (bookings) {
+      const dateBookings = bookings.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
+      if (dateBookings.length >= 5) return true // All slots taken
+    }
+    return false
   }
 
   const handlePackageChange = (packageId: string) => {
@@ -2255,7 +2280,15 @@ function ManualBookingModal({ onClose, onSuccess, isMobile }: { onClose: () => v
           <section>
             <SectionTitle>Fecha y Hora</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
-              <input required type="date" value={formData.sessionDate} onChange={e => setFormData({...formData, sessionDate: e.target.value, sessionTime: ''})} min={new Date().toISOString().split('T')[0]} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm" />
+              <input 
+                required 
+                type="date" 
+                value={formData.sessionDate} 
+                onChange={e => setFormData({...formData, sessionDate: e.target.value, sessionTime: ''})} 
+                min={new Date().toISOString().split('T')[0]} 
+                className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm"
+                disabled={isDateBlockedOrFull(formData.sessionDate)}
+              />
               <select required value={formData.sessionTime} onChange={e => setFormData({...formData, sessionTime: e.target.value})} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm">
                 <option value="">Hora...</option>
                 {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => <option key={t} value={t}>{t}</option>)}
