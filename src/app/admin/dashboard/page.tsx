@@ -59,15 +59,13 @@ function useIsMobile(breakpoint = 768) {
 function useScrollLock(isLocked: boolean) {
   useEffect(() => {
     if (isLocked) {
+      const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobileDevice) return // Don't lock on mobile - causes keyboard issues
+      
       const originalStyle = window.getComputedStyle(document.body).overflow
-      const originalPosition = window.getComputedStyle(document.body).position
       document.body.style.overflow = 'hidden'
-      document.body.style.position = 'fixed'
-      document.body.style.width = '100%'
       return () => {
         document.body.style.overflow = originalStyle
-        document.body.style.position = originalPosition
-        document.body.style.width = 'auto'
       }
     }
   }, [isLocked])
