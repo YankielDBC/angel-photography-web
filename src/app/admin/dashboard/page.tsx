@@ -2133,35 +2133,30 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
   }, [])
 
   const getAvailableTimes = (date: string) => {
-    // First check calendarData from API
-    const dayData = calendarData?.[date]
-    if (dayData?.slots) {
-      return timeSlots.filter(t => {
-        const slot = dayData.slots.find((s: any) => s.time === t)
-        return slot?.status === 'available'
-      })
-    }
+    if (!date) return timeSlots
     
-    // Fallback: check bookings directly
-    if (bookings) {
+    // Check bookings directly - this is more reliable
+    if (bookings && bookings.length > 0) {
       const dateBookings = bookings.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
       const bookedTimes = dateBookings.map((b: any) => {
         const [h, m] = b.sessionTime.split(':')
         return `${parseInt(h)}:${m}`
       })
-      return timeSlots.filter(t => !bookedTimes.includes(t))
+      console.log('Date:', date, 'Bookings:', dateBookings.length, 'Booked times:', bookedTimes)
+      return timeSlots.filter(t => !bookedTimes.includes(t));
     }
     
     return timeSlots
   }
 
   const isDateBlockedOrFull = (date: string) => {
-    const dayData = calendarData?.[date]
-    if (dayData?.status === 'blocked' || dayData?.status === 'full') return true
+    if (!date) return false
     
-    if (bookings) {
+    // Check if date has 5 or more bookings (all slots taken)
+    if (bookings && bookings.length > 0) {
       const dateBookings = bookings.filter((b: any) => b.sessionDate === date && b.status !== 'cancelled')
-      if (dateBookings.length >= 5) return true // All slots taken
+      console.log('Date:', date, 'Bookings count:', dateBookings.length)
+      return dateBookings.length >= 5
     }
     return false
   }
