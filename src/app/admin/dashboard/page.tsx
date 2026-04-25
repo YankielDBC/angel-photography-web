@@ -2112,6 +2112,16 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
   const [sessionTypes, setSessionTypes] = useState<any[]>([])
 
   const timeSlots = ['9:30', '11:30', '14:00', '16:00', '18:00']
+  
+  const formatTime = (t: string) => {
+    const [h, m] = t.split(':')
+    const hour = parseInt(h)
+    if (hour === 0) return `12:${m} AM`
+    if (hour === 12) return `12:${m} PM`
+    if (hour < 12) return `${hour}:${m} AM`
+    return `${hour - 12}:${m} PM`
+  }
+  
   const digitalPackages = [
     { id: 'digital-6', name: '6 Fotos Digitales', price: 190 },
     { id: 'digital-12', name: '12 Fotos Digitales', price: 290 },
@@ -2365,7 +2375,7 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
               </div>
               <select required value={formData.sessionTime} onChange={e => setFormData({...formData, sessionTime: e.target.value})} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm">
                 <option value="">Hora...</option>
-                {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => <option key={t} value={t}>{t}</option>)}
+                {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => <option key={t} value={t}>{formatTime(t)}</option>)}
               </select>
             </div>
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
