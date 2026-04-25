@@ -2134,28 +2134,33 @@ function ManualBookingModal({ onClose, onSuccess, isMobile, calendarData, bookin
 
   // Load blocked slots
   const [blockedSlots, setBlockedSlots] = useState<string[]>([])
-  const [bookingsData, setBookingsData] = useState<any[]>(bookings || [])
+  const [bookingsData, setBookingsData] = useState<any[]>([])
   
-  // Sync bookings from props when they change
   useEffect(() => {
-    if (bookings && bookings.length > 0) {
-      console.log('ManualBookingModal: Received bookings:', bookings.length)
-      setBookingsData(bookings)
+    const loadData = async () => {
+      try {
+        // Load bookings directly from API
+        const bookingsRes = await fetch('/api/bookings')
+        const bookingsList = await bookingsRes.json()
+        const activeBookings = bookingsList.filter((b: any) => b.status !== 'cancelled')
+        console.log('ManualBookingModal: Loaded bookings:', activeBookings.length)
+        setBookingsData(activeBookings)
+      } catch (e) { console.error('Error loading bookings:', e) }
     }
-  }, [bookings])
-  
-  useEffect(() => {
+    
     const loadBlockedSlots = async () => {
       try {
         const res = await fetch('/api/blocked-slots')
         const data = await res.json()
-        console.log('ManualBookingModal: Blocked slots loaded:', data.length || 0, data)
+        console.log('ManualBookingModal: Blocked slots loaded:', data.length || 0)
         if (data && data.length > 0) {
           const slots = data.map((b: any) => `${b.date} ${b.time}`)
           setBlockedSlots(slots)
         }
       } catch (e) { console.error('Error loading blocked slots:', e) }
     }
+    
+    loadData()
     loadBlockedSlots()
   }, [])
 
