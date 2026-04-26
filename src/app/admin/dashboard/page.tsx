@@ -918,8 +918,11 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
 
   const handleSaveCost = () => { setSaving(true); onUpdateCost(localBooking.id, parseFloat(sessionCost) || 0); setSaving(false) }
   const handleAddExpense = async () => {
-    if (!expenseAmount || parseFloat(expenseAmount) <= 0) return
-    const newExpense = { amount: parseFloat(expenseAmount), category: expenseCategory, notes: expenseNotes, isIncome, createdAt: new Date().toISOString() }
+    const amountInput = document.getElementById('expense-amount-input') as HTMLInputElement
+    const amountValue = amountInput?.value || expenseAmount
+    const parsedAmount = parseFloat(amountValue.replace(/[^0-9.]/g, ''))
+    if (!parsedAmount || parsedAmount <= 0) return
+    const newExpense = { amount: parsedAmount, category: expenseCategory, notes: expenseNotes, isIncome, createdAt: new Date().toISOString() }
     const currentExpenses = (localBooking as any).expenses || []
     await fetch(`/api/bookings?id=${localBooking.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expenses: [...currentExpenses, newExpense] }) })
     setLocalBooking({ ...localBooking, expenses: [...currentExpenses, newExpense] })
@@ -1050,12 +1053,9 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
                     type="text" 
                     inputMode="decimal" 
                     placeholder="Monto" 
-                    value={expenseAmount} 
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9.]/g, '')
-                      setExpenseAmount(val)
-                    }} 
                     className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs"
+                    autoComplete="off"
+                    id="expense-amount-input"
                   />
                   <input 
                     type="text" 
